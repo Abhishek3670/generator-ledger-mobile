@@ -4,6 +4,7 @@ import '../core/auth/auth_provider.dart';
 import '../features/auth/login_screen.dart';
 import '../features/dashboard/dashboard_screen.dart';
 import '../features/bookings/bookings_list_screen.dart';
+import '../features/directory/directory_screen.dart';
 import 'app_scaffold.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -83,15 +84,6 @@ class AuthBootstrapScreen extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-// Temporary Directory and More screens until they are implemented in their features
-class DirectoryScreen extends StatelessWidget {
-  const DirectoryScreen({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: Text('Directory (Generators & Vendors)')));
   }
 }
 

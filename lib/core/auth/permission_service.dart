@@ -1,9 +1,14 @@
 import '../models/user.dart';
+import 'auth_provider.dart';
 
 /// Centralized permission resolver aligned to backend capability keys and default role rules.
 /// 
 /// Mirroring backend logic from web_app_source/core/permissions.py.
 class PermissionService {
+  final AuthProvider _authProvider;
+
+  PermissionService(this._authProvider);
+
   // Capability Keys
   static const String settingsUserAdmin = "settings_user_admin";
   static const String monitorAccess = "monitor_access";
@@ -18,11 +23,14 @@ class PermissionService {
   static const String roleAdmin = "admin";
   static const String roleOperator = "operator";
 
+  bool can(String capability) {
+    final user = _authProvider.user;
+    if (user == null) return false;
+    final permissions = getEffectivePermissions(user);
+    return permissions[capability] ?? false;
+  }
+
   /// Resolves effective permissions for a user based on their role.
-  /// 
-  /// NOTE: This currently implements role-based defaults only. 
-  /// Override-aware permission sync is not complete because there is no 
-  /// verified current-user effective-permissions API yet.
   static Map<String, bool> getEffectivePermissions(User user) {
     final role = user.role.toLowerCase();
     

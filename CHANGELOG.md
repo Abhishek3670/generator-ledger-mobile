@@ -4,7 +4,32 @@ All notable changes to the Flutter mobile client should be recorded in this file
 
 ## [Unreleased]
 
-- No unreleased mobile changes recorded after `0.1.0` yet.
+- No unreleased mobile changes recorded after `0.2.0` yet.
+
+## [0.2.0]
+
+Status: approved phase-2 directory baseline  
+Basis: reviewed and approved against the FastAPI backend before phase 3
+
+### Added
+
+- Directory feature module with segmented navigation between vendors and generators.
+- Backend-connected vendor and rental-partner repositories, providers, list views, and create/edit dialogs.
+- Backend-connected generator repository, provider, inventory-tab views, and create/edit dialog.
+- Shared directory search bar component reused by vendor and generator screens.
+
+### Changed
+
+- App dependency wiring now registers directory repositories/providers and injects the centralized permission service instance for feature gating.
+- Router directory tab now points to the implemented feature module instead of the temporary placeholder screen.
+- Vendor and generator search/filter behavior is now handled inside dedicated providers and shared UI.
+
+### Fixed
+
+- Vendor and rental-vendor tabs now keep separate loading and error state during concurrent fetches.
+- Directory mutation flows now surface backend `detail` messages for validation and conflict failures.
+- Generator create/update requests now send the backend-required `capacity_kva` field.
+- Unsupported generator delete behavior was removed to stay aligned with the current FastAPI contract.
 
 ## [0.1.0]
 

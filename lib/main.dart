@@ -4,6 +4,11 @@ import 'package:provider/provider.dart';
 import 'core/auth/auth_provider.dart';
 import 'core/auth/auth_service.dart';
 import 'core/api/api_client.dart';
+import 'core/auth/permission_service.dart';
+import 'features/vendors/data/vendor_repository.dart';
+import 'features/vendors/providers/vendor_provider.dart';
+import 'features/generators/data/generator_repository.dart';
+import 'features/generators/providers/generator_provider.dart';
 import 'app/router.dart';
 
 void main() async {
@@ -14,11 +19,18 @@ void main() async {
   final apiClient = ApiClient(authProvider);
   authProvider.setApiClient(apiClient);
 
+  final vendorRepository = VendorRepository(apiClient);
+  final generatorRepository = GeneratorRepository(apiClient);
+  final permissionService = PermissionService(authProvider);
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: authProvider),
         Provider.value(value: apiClient),
+        Provider.value(value: permissionService),
+        ChangeNotifierProvider(create: (_) => VendorProvider(vendorRepository)),
+        ChangeNotifierProvider(create: (_) => GeneratorProvider(generatorRepository)),
       ],
       child: const GensetLedgerApp(),
     ),
