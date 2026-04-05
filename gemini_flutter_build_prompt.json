@@ -1,0 +1,471 @@
+{
+  "prompt_version": "1.0",
+  "task_type": "flutter_mobile_rebuild_from_existing_web_app",
+  "target_model": "Gemini",
+  "workspace_context": {
+    "mobile_project_path": "W:\\Aatish\\Stuff\\gensetledgermobile\\flutter_app",
+    "current_mobile_state": "Fresh Flutter scaffold. lib/main.dart contains only a placeholder dashboard.",
+    "existing_mobile_dependencies": [
+      "flutter",
+      "dio",
+      "provider",
+      "google_fonts"
+    ]
+  },
+  "source_app_context": {
+    "source_repo_url": "https://github.com/Abhishek3670/generator-ledger",
+    "analyzed_commit": "4b0ca59553ebd54d7964b9bd3dea023b104e4b6f",
+    "analyzed_commit_date": "2026-03-24",
+    "source_version": "4.0.1",
+    "source_stack": [
+      "FastAPI",
+      "Jinja templates",
+      "PostgreSQL",
+      "JWT auth for API clients",
+      "session-cookie auth for browser UI"
+    ],
+    "important_note": "Do not copy the server-rendered implementation structure. Rebuild the product behavior and API-driven functionality in Flutter."
+  },
+  "role": "You are a senior Flutter engineer rebuilding the mobile app to match the existing Generator Ledger web product as closely as possible in behavior, flows, and visual language while remaining mobile-native.",
+  "primary_objective": "Implement the Flutter app so it behaves like the existing web app, uses the existing FastAPI JSON APIs, preserves all critical business rules, and replaces the current placeholder app with production-oriented modules.",
+  "non_goals": [
+    "Do not invent new business workflows that do not exist in the backend.",
+    "Do not create fake local-only data models that diverge from API payloads.",
+    "Do not mimic desktop tables literally when a mobile-native card or sheet pattern is more appropriate.",
+    "Do not use browser session-cookie flows for mobile auth; use JWT APIs."
+  ],
+  "domain_model": {
+    "entities": [
+      {
+        "name": "Generator",
+        "fields": [
+          "generator_id",
+          "capacity_kva",
+          "identification",
+          "type",
+          "status",
+          "notes",
+          "inventory_type",
+          "rental_vendor_id",
+          "rental_vendor_name"
+        ]
+      },
+      {
+        "name": "Vendor",
+        "fields": [
+          "vendor_id",
+          "vendor_name",
+          "vendor_place",
+          "phone"
+        ]
+      },
+      {
+        "name": "RentalVendor",
+        "fields": [
+          "rental_vendor_id",
+          "vendor_name",
+          "vendor_place",
+          "phone"
+        ]
+      },
+      {
+        "name": "Booking",
+        "fields": [
+          "booking_id",
+          "vendor_id",
+          "created_at",
+          "status"
+        ]
+      },
+      {
+        "name": "BookingItem",
+        "fields": [
+          "id",
+          "booking_id",
+          "generator_id",
+          "capacity_kva",
+          "inventory_type",
+          "is_emergency",
+          "start_dt",
+          "end_dt",
+          "status",
+          "remarks"
+        ]
+      },
+      {
+        "name": "User",
+        "fields": [
+          "id",
+          "username",
+          "role",
+          "capabilities"
+        ]
+      }
+    ],
+    "inventory_types": [
+      "retailer",
+      "permanent",
+      "emergency"
+    ],
+    "booking_statuses": [
+      "Confirmed",
+      "Pending",
+      "Cancelled"
+    ],
+    "roles": [
+      "admin",
+      "operator"
+    ]
+  },
+  "critical_business_rules": [
+    "Permanent generators are not bookable stock.",
+    "Permanent generators require rental_vendor_id.",
+    "Bookable inventory includes retailer and emergency only.",
+    "Capacity-based booking must auto-assign from retailer stock first.",
+    "If retailer stock is unavailable but emergency stock exists, the backend returns HTTP 409 with error_code retailer_out_of_stock and emergency suggestions. The mobile app must present those suggestions clearly and let the user resubmit with the selected emergency generator(s).",
+    "Explicit emergency generator selection is allowed.",
+    "If the same vendor already has a confirmed booking with overlapping selected dates, booking creation merges items into the existing booking instead of creating a separate booking.",
+    "Date-based UI booking items map to start_dt 00:00 and end_dt 23:59 for that day.",
+    "Bulk edit cannot remove all booking items. Full removal must use delete booking.",
+    "Deleting a vendor is blocked when bookings reference that vendor.",
+    "Permissions must be enforced in the UI by hiding or disabling restricted actions.",
+    "History is an audit timeline, not a chat feed or notification feed."
+  ],
+  "api_contract": {
+    "auth": [
+      {
+        "method": "POST",
+        "path": "/api/login",
+        "purpose": "JWT login",
+        "request": {
+          "username": "string",
+          "password": "string"
+        },
+        "response_keys": [
+          "access_token",
+          "token_type",
+          "expires_in",
+          "user"
+        ]
+      },
+      {
+        "method": "POST",
+        "path": "/api/logout",
+        "purpose": "Logout and token revoke"
+      }
+    ],
+    "read_endpoints": [
+      "GET /api/generators",
+      "GET /api/generators/{generator_id}/bookings",
+      "GET /api/vendors",
+      "GET /api/rental-vendors",
+      "GET /api/vendors/{vendor_id}/bookings",
+      "GET /api/bookings",
+      "GET /api/bookings/{booking_id}",
+      "GET /api/billing/lines?from=YYYY-MM-DD&to=YYYY-MM-DD",
+      "GET /api/calendar/events",
+      "GET /api/calendar/day?date=YYYY-MM-DD",
+      "GET /api/monitor/live",
+      "GET /api/info",
+      "GET /health"
+    ],
+    "write_endpoints": [
+      "POST /api/generators",
+      "PATCH /api/generators/{generator_id}",
+      "POST /api/vendors",
+      "PATCH /api/vendors/{vendor_id}",
+      "DELETE /api/vendors/{vendor_id}",
+      "POST /api/rental-vendors",
+      "PATCH /api/rental-vendors/{rental_vendor_id}",
+      "DELETE /api/rental-vendors/{rental_vendor_id}",
+      "POST /api/bookings",
+      "POST /api/bookings/{booking_id}/cancel",
+      "DELETE /api/bookings/{booking_id}",
+      "POST /api/bookings/{booking_id}/items",
+      "POST /api/bookings/{booking_id}/items/bulk-update",
+      "GET /api/export"
+    ],
+    "notable_response_behavior": [
+      "GET /api/generators returns inventory_type and rental vendor metadata.",
+      "GET /api/vendors/{vendor_id}/bookings returns vendor summary, status_counts, bookings, and enriched items including inventory_type and is_emergency.",
+      "GET /api/bookings/{booking_id} returns booking plus enriched items including capacity_kva, inventory_type, and is_emergency.",
+      "GET /api/billing/lines returns rows, capacities, and count for a date range.",
+      "GET /api/calendar/events returns aggregated day events.",
+      "GET /api/calendar/day returns vendors grouped by date with booking items.",
+      "POST /api/bookings may return 409 retailer_out_of_stock with affected_dates and emergency_options.",
+      "POST /api/bookings returns is_merged and total_items when successful."
+    ]
+  },
+  "visual_direction": {
+    "font": "Space Grotesk",
+    "palette": {
+      "primary": "slate-900 style dark slate",
+      "secondary": "slate neutrals",
+      "accent": "amber",
+      "danger": "rose/red",
+      "success": "emerald"
+    },
+    "surface_style": [
+      "rounded cards",
+      "soft borders",
+      "subtle shadows",
+      "white surfaces",
+      "light slate gradient backgrounds"
+    ],
+    "semantic_color_usage": {
+      "retailer": "slate or neutral",
+      "permanent": "amber",
+      "emergency": "rose",
+      "confirmed": "emerald",
+      "pending": "amber",
+      "cancelled": "rose"
+    }
+  },
+  "mobile_product_translation": {
+    "navigation": {
+      "pattern": "bottom navigation plus secondary screens under More",
+      "primary_tabs": [
+        "Dashboard",
+        "Bookings",
+        "Directory",
+        "More"
+      ]
+    },
+    "screen_mapping": [
+      {
+        "screen": "Login",
+        "mobile_pattern": "simple centered form with JWT sign-in"
+      },
+      {
+        "screen": "Dashboard",
+        "mobile_pattern": "stat cards, monthly calendar, day-detail bottom sheet"
+      },
+      {
+        "screen": "Bookings List",
+        "mobile_pattern": "vendor-grouped expandable cards with search, status chips, and date filters"
+      },
+      {
+        "screen": "Booking Detail",
+        "mobile_pattern": "summary card, item cards, persistent action area"
+      },
+      {
+        "screen": "Create Booking",
+        "mobile_pattern": "vendor search, item builder, generator mode toggle, emergency fallback bottom sheet"
+      },
+      {
+        "screen": "Edit Booking",
+        "mobile_pattern": "editable item cards with remove actions and add-item section"
+      },
+      {
+        "screen": "Generators",
+        "mobile_pattern": "segmented tabs for Retailer, Permanent, Emergency with searchable cards"
+      },
+      {
+        "screen": "Vendors",
+        "mobile_pattern": "top tabs for Retailer and Rental with list cards and CRUD forms"
+      },
+      {
+        "screen": "Billing",
+        "mobile_pattern": "date-range filters, capacity rate editors, grouped totals"
+      },
+      {
+        "screen": "History",
+        "mobile_pattern": "timeline feed with filter chips and expandable details"
+      },
+      {
+        "screen": "Admin Settings",
+        "mobile_pattern": "sectioned admin screens for users, permissions, and monitor"
+      }
+    ]
+  },
+  "flutter_architecture": {
+    "state_management": "provider",
+    "networking": "dio",
+    "recommended_additional_packages": [
+      "flutter_secure_storage",
+      "go_router",
+      "intl",
+      "table_calendar"
+    ],
+    "layering": [
+      "api client",
+      "repositories",
+      "providers/controllers",
+      "screens/widgets"
+    ],
+    "folder_structure": [
+      "lib/app",
+      "lib/core/api",
+      "lib/core/auth",
+      "lib/core/models",
+      "lib/core/widgets",
+      "lib/features/auth",
+      "lib/features/dashboard",
+      "lib/features/bookings",
+      "lib/features/generators",
+      "lib/features/vendors",
+      "lib/features/billing",
+      "lib/features/history",
+      "lib/features/settings"
+    ]
+  },
+  "implementation_plan": [
+    {
+      "phase": 1,
+      "name": "Foundation",
+      "deliverables": [
+        "Replace placeholder main.dart with real app shell",
+        "Set up theme, router, dependency wiring, and auth bootstrap",
+        "Implement Dio client with bearer token interceptor and error handling",
+        "Persist JWT and current user in secure storage"
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "Directory Modules",
+      "deliverables": [
+        "Implement vendors screens and CRUD flows",
+        "Implement generators screens and create/update flows",
+        "Support inventory_type specific UI and validation"
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Booking Core",
+      "deliverables": [
+        "Implement bookings list",
+        "Implement booking detail",
+        "Implement create booking flow",
+        "Implement edit booking flow",
+        "Implement cancel and delete flows",
+        "Implement emergency fallback resubmission flow"
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "Dashboard and Calendar",
+      "deliverables": [
+        "Implement operational overview counts",
+        "Implement calendar events",
+        "Implement day detail bottom sheet"
+      ]
+    },
+    {
+      "phase": 5,
+      "name": "Billing and History",
+      "deliverables": [
+        "Implement billing lines view with temporary capacity rates",
+        "Implement history timeline with filters and expandable details"
+      ]
+    },
+    {
+      "phase": 6,
+      "name": "Admin",
+      "deliverables": [
+        "Implement user management screens",
+        "Implement permission matrix editor",
+        "Implement monitor metrics screen"
+      ]
+    },
+    {
+      "phase": 7,
+      "name": "Hardening",
+      "deliverables": [
+        "Refine loading, empty, error, and offline states",
+        "Audit permission-gated actions",
+        "Verify mobile layouts on narrow Android screens",
+        "Add focused widget and integration tests"
+      ]
+    }
+  ],
+  "component_breakdown": {
+    "shared_components": [
+      "AppScaffold",
+      "SectionHeader",
+      "StatusBadge",
+      "InventoryBadge",
+      "SearchField",
+      "EmptyStateCard",
+      "ErrorStateCard",
+      "AsyncActionButton",
+      "FilterChipRow",
+      "DateRangeSelector",
+      "EntityActionSheet",
+      "ConfirmationDialog"
+    ],
+    "bookings_components": [
+      "BookingVendorGroupCard",
+      "BookingDateRowCard",
+      "BookingSummaryCard",
+      "BookingItemCard",
+      "BookingItemEditorCard",
+      "EmergencyFallbackSheet",
+      "VendorBookingPreviewSheet"
+    ],
+    "generator_components": [
+      "GeneratorInventoryTabBar",
+      "GeneratorCard",
+      "GeneratorEditorSheet",
+      "GeneratorAvailabilityBadge"
+    ],
+    "vendor_components": [
+      "VendorCard",
+      "VendorEditorSheet",
+      "VendorTypeTabBar"
+    ],
+    "dashboard_components": [
+      "OverviewStatCard",
+      "BookingCalendarCard",
+      "CalendarDaySheet"
+    ],
+    "history_components": [
+      "HistoryTimelineItem",
+      "HistoryEventBadge",
+      "HistoryDetailsPanel"
+    ],
+    "settings_components": [
+      "UserCard",
+      "PermissionMatrixSection",
+      "CapabilityToggleRow",
+      "MonitorMetricCard"
+    ]
+  },
+  "engineering_constraints": [
+    "Prefer real implementation over stubbed placeholders.",
+    "Keep code modular and avoid putting the whole app in main.dart.",
+    "Match backend field names carefully and centralize DTO parsing.",
+    "Gracefully handle 401, 403, 404, 409, and 500 responses.",
+    "Do not assume admin permissions for operator users.",
+    "Do not expose create, update, delete, billing, export, or monitor actions without checking capabilities.",
+    "Use mobile-native bottom sheets and cards instead of desktop-style wide tables where appropriate.",
+    "Keep visual parity with the web app's tone, palette, and typography."
+  ],
+  "acceptance_criteria": [
+    "The app can log in with /api/login and persist the token.",
+    "The app shell replaces the placeholder dashboard and uses structured routing.",
+    "Generator inventory renders three groups and enforces permanent generator rules.",
+    "Vendor management supports retailer and rental vendors.",
+    "Booking creation supports capacity-based assignment, explicit generator selection, and emergency fallback handling.",
+    "Booking detail and edit flows render emergency generators with distinct warning styling.",
+    "Booking edit prevents removing all items through bulk update.",
+    "Dashboard calendar loads events and shows day details.",
+    "Billing uses the existing API and computes totals client-side from temporary capacity rates.",
+    "Admin-only screens remain inaccessible to non-admin users.",
+    "The UI feels like a mobile translation of the existing web app, not a generic template."
+  ],
+  "execution_protocol": {
+    "working_style": [
+      "Work iteratively.",
+      "After each phase, summarize changed files, completed behavior, remaining gaps, and how to verify.",
+      "If an API shape is uncertain, inspect the backend code before guessing.",
+      "Keep migrations incremental and runnable."
+    ],
+    "first_steps": [
+      "Inspect current Flutter files in lib/",
+      "Replace placeholder app shell with modular structure",
+      "Create API client, auth models, secure token storage, and login screen",
+      "Add routing and an authenticated home shell"
+    ]
+  },
+  "final_instruction": "Start implementing the Flutter app in this workspace now. Begin with the foundation and auth phase, keep code organized by feature, and preserve the backend behavior exactly where business rules are concerned."
+}

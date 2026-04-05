@@ -1,0 +1,194 @@
+{
+  "prompt_version": "1.0",
+  "target_model": "Gemini",
+  "prompt_type": "foundation_fix_before_phase2",
+  "instruction": "Do not start Phase 2 yet. First fix the current Phase 1 Flutter foundation so it compiles and matches the actual FastAPI backend contract.",
+  "workspace": {
+    "project_path": "W:\\Aatish\\Stuff\\gensetledgermobile\\flutter_app",
+    "status": "Flutter Phase 1 foundation exists but contains compile blockers and API-contract mismatches."
+  },
+  "review_findings": [
+    {
+      "severity": "critical",
+      "issue": "Router imports screens that do not exist, so the app cannot compile.",
+      "files": [
+        "lib/app/router.dart"
+      ],
+      "details": [
+        "These imports are unresolved: ../features/dashboard/dashboard_screen.dart, ../features/bookings/bookings_list_screen.dart, ../features/generators/generators_screen.dart, ../features/vendors/vendors_screen.dart.",
+        "Currently the imported files do not exist in lib/."
+      ]
+    },
+    {
+      "severity": "critical",
+      "issue": "Login screen uses Colors.slate, which is not a valid Flutter Material color constant.",
+      "files": [
+        "lib/features/auth/login_screen.dart"
+      ],
+      "details": [
+        "Replace Colors.slate.shade600 with an explicit Color value or theme color."
+      ]
+    },
+    {
+      "severity": "high",
+      "issue": "Generator model does not match the actual GET /api/generators response shape.",
+      "files": [
+        "lib/core/models/generator.dart"
+      ],
+      "details": [
+        "Backend returns keys id and capacity, not generator_id and capacity_kva, for generator list items.",
+        "rental_vendor_id is a string in the backend response, not int.",
+        "The current model will fail or decode incorrect values when the generator list API is used."
+      ],
+      "backend_reference": {
+        "endpoint": "GET /api/generators",
+        "response_keys": [
+          "id",
+          "capacity",
+          "identification",
+          "type",
+          "status",
+          "notes",
+          "inventory_type",
+          "rental_vendor_id",
+          "rental_vendor_name",
+          "inventory_label"
+        ]
+      }
+    },
+    {
+      "severity": "high",
+      "issue": "Vendor and RentalVendor models do not match the actual vendor API response shape.",
+      "files": [
+        "lib/core/models/vendor.dart"
+      ],
+      "details": [
+        "GET /api/vendors returns id, name, place, phone.",
+        "GET /api/rental-vendors returns rental_vendor_id, name, place, phone.",
+        "Vendor ids are strings in the backend, not ints.",
+        "The current code expects vendor_id, vendor_name, vendor_place for retailer vendors, which is wrong for the list API."
+      ]
+    },
+    {
+      "severity": "medium",
+      "issue": "Auth bootstrap marks the app authenticated based only on token presence, even if no user payload exists or the token is stale.",
+      "files": [
+        "lib/core/auth/auth_provider.dart",
+        "lib/core/api/api_client.dart",
+        "lib/core/auth/auth_service.dart"
+      ],
+      "details": [
+        "If token exists but user is missing or invalid, _status becomes authenticated and _user may remain null.",
+        "401 handling clears storage but does not notify AuthProvider, so the UI can stay in an inconsistent authenticated state.",
+        "Router redirect logic should treat the initial auth restoration state separately instead of immediately redirecting based on a transient unauthenticated state."
+      ]
+    }
+  ],
+  "required_fixes": [
+    {
+      "task": "Make the app compile cleanly.",
+      "requirements": [
+        "Either create the missing screen files under the imported feature paths or remove those imports and route references until real files exist.",
+        "Keep the modular app structure.",
+        "Do not leave broken imports."
+      ]
+    },
+    {
+      "task": "Fix invalid Flutter UI code in login screen.",
+      "requirements": [
+        "Replace Colors.slate usage with a valid color source.",
+        "Keep the visual style aligned with the web app."
+      ]
+    },
+    {
+      "task": "Align the Flutter DTOs/models to the real backend API contracts.",
+      "requirements": [
+        "Create separate DTOs if needed for list responses versus detail responses.",
+        "Use string ids for vendor ids, rental vendor ids, and generator ids.",
+        "For generator list responses, decode id and capacity correctly.",
+        "For vendor list responses, decode id/name/place/phone correctly.",
+        "Do not invent fields the backend does not return in that endpoint."
+      ]
+    },
+    {
+      "task": "Harden auth restoration and logout behavior.",
+      "requirements": [
+        "Treat auth initialization as a real loading state.",
+        "Only transition to authenticated when both token and valid user context are present.",
+        "If auth restoration fails, clear persisted auth cleanly.",
+        "When a 401 occurs in Dio, propagate logout back into AuthProvider so the UI updates immediately."
+      ]
+    },
+    {
+      "task": "Keep the phase boundary clean.",
+      "requirements": [
+        "Do not implement vendors/generators/bookings business features yet.",
+        "It is acceptable to add minimal placeholder screens if needed for routing and compile safety.",
+        "Foundation must be correct before Phase 2 starts."
+      ]
+    }
+  ],
+  "backend_contract_reference": {
+    "login": {
+      "endpoint": "POST /api/login",
+      "response": {
+        "access_token": "string",
+        "token_type": "bearer",
+        "expires_in": "int",
+        "user": {
+          "id": "int",
+          "username": "string",
+          "role": "string"
+        }
+      }
+    },
+    "generators_list": {
+      "endpoint": "GET /api/generators",
+      "response_item": {
+        "id": "string",
+        "capacity": "int",
+        "identification": "string",
+        "type": "string",
+        "status": "string",
+        "notes": "string",
+        "inventory_type": "string",
+        "rental_vendor_id": "string",
+        "rental_vendor_name": "string",
+        "inventory_label": "string"
+      }
+    },
+    "vendors_list": {
+      "endpoint": "GET /api/vendors",
+      "response_item": {
+        "id": "string",
+        "name": "string",
+        "place": "string",
+        "phone": "string"
+      }
+    },
+    "rental_vendors_list": {
+      "endpoint": "GET /api/rental-vendors",
+      "response_item": {
+        "rental_vendor_id": "string",
+        "name": "string",
+        "place": "string",
+        "phone": "string"
+      }
+    }
+  },
+  "acceptance_criteria": [
+    "The Flutter app compiles without unresolved imports.",
+    "The router boots with real or temporary placeholder screens in the declared feature paths.",
+    "The login screen no longer contains invalid Flutter color API usage.",
+    "Generator, vendor, and rental vendor decoding matches the actual backend list endpoints.",
+    "Auth initialization has a stable loading state and does not falsely mark the user authenticated from token-only state.",
+    "A 401 from the API can drive the app back to unauthenticated state cleanly."
+  ],
+  "delivery_format": {
+    "after_completion": [
+      "List all changed files.",
+      "Summarize exactly which finding each change fixes.",
+      "State whether Phase 1 is now complete and safe to continue into Phase 2."
+    ]
+  }
+}
