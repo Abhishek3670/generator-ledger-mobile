@@ -28,16 +28,19 @@ class _LoginScreenState extends State<LoginScreen> {
       final apiClient = context.read<ApiClient>();
       final authProvider = context.read<AuthProvider>();
 
+      // Corrected: Backend expects flat JSON for login credentials
       final response = await apiClient.dio.post('/api/login', data: {
         'username': _usernameController.text,
         'password': _passwordController.text,
       });
 
-      final token = response.data['access_token'];
-      final userData = response.data['user'];
+      final data = response.data;
+      final token = data['access_token'];
+      final expiresIn = data['expires_in'] as int;
+      final userData = data['user'];
       final user = User.fromJson(userData);
 
-      await authProvider.login(token, user);
+      await authProvider.login(token, user, expiresIn);
     } on DioException catch (e) {
       setState(() {
         _errorMessage = e.response?.data['detail'] ?? 'Login failed. Please check your credentials.';

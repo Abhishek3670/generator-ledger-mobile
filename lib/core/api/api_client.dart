@@ -23,7 +23,10 @@ class ApiClient {
         return handler.next(options);
       },
       onError: (DioException e, handler) {
-        if (e.response?.statusCode == 401) {
+        // Skip global 401 handling if the request explicitly asks to skip it (e.g., logout)
+        final skipAuthHandler = e.requestOptions.extra['skipAuthHandler'] == true;
+        
+        if (e.response?.statusCode == 401 && !skipAuthHandler) {
           // Trigger logout in AuthProvider to update UI immediately
           _authProvider.logout();
         }

@@ -1,30 +1,29 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:genset_ledger_mobile/main.dart';
+import 'package:genset_ledger_mobile/core/auth/auth_service.dart';
+import 'package:genset_ledger_mobile/core/auth/auth_provider.dart';
+import 'package:genset_ledger_mobile/core/api/api_client.dart';
+import 'package:genset_ledger_mobile/app/router.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('App bootstrap smoke test', (WidgetTester tester) async {
+    final authService = AuthService();
+    final authProvider = AuthProvider(authService);
+    final apiClient = ApiClient(authProvider);
+    authProvider.setApiClient(apiClient);
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: authProvider),
+          Provider.value(value: apiClient),
+        ],
+        child: const GensetLedgerApp(),
+      ),
+    );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verify that the bootstrap screen (loading indicator) is shown initially
+    expect(find.byType(AuthBootstrapScreen), findsOneWidget);
   });
 }

@@ -12,6 +12,7 @@ void main() async {
   final authService = AuthService();
   final authProvider = AuthProvider(authService);
   final apiClient = ApiClient(authProvider);
+  authProvider.setApiClient(apiClient);
 
   runApp(
     MultiProvider(
@@ -29,7 +30,7 @@ class GensetLedgerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = context.watch<AuthProvider>();
+    final authProvider = context.read<AuthProvider>();
     final router = AppRouter.createRouter(authProvider);
 
     return MaterialApp.router(
@@ -54,7 +55,7 @@ class GensetLedgerApp extends StatelessWidget {
           foregroundColor: Colors.white,
           elevation: 0,
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
