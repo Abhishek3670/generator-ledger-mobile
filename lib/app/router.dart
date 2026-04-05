@@ -4,6 +4,7 @@ import '../core/auth/auth_provider.dart';
 import '../features/auth/login_screen.dart';
 import '../features/dashboard/dashboard_screen.dart';
 import '../features/bookings/bookings_list_screen.dart';
+import '../features/bookings/booking_detail_screen.dart';
 import '../features/directory/directory_screen.dart';
 import 'app_scaffold.dart';
 
@@ -51,6 +52,14 @@ class AppRouter {
             GoRoute(
               path: '/bookings',
               builder: (context, state) => const BookingsListScreen(),
+              routes: [
+                GoRoute(
+                  path: ':id',
+                  builder: (context, state) => BookingDetailScreen(
+                    bookingId: state.pathParameters['id']!,
+                  ),
+                ),
+              ],
             ),
             GoRoute(
               path: '/directory',

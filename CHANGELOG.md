@@ -4,7 +4,32 @@ All notable changes to the Flutter mobile client should be recorded in this file
 
 ## [Unreleased]
 
-- No unreleased mobile changes recorded after `0.2.0` yet.
+- No unreleased mobile changes recorded after `0.3.0` yet.
+
+## [0.3.0]
+
+Status: approved phase-3 bookings baseline  
+Basis: reviewed and approved against the FastAPI backend before phase 4
+
+### Added
+
+- Backend-connected bookings feature module with repositories, providers, models, list screen, detail screen, cards, and booking forms.
+- Booking detail flow with item rendering, emergency-item highlighting, and capability-gated cancel/delete actions.
+- Booking edit flow that supports bulk item update/remove and add-item operations through the supported backend endpoints.
+- Emergency fallback selection flow for retailer-out-of-stock booking creation responses.
+
+### Changed
+
+- The `/bookings` route now points to a real bookings module instead of a placeholder screen.
+- Bookings flows now bootstrap vendor directory data independently so vendor resolution works even when the user enters bookings first.
+- Booking list search now supports booking ID and resolved vendor name filtering.
+
+### Fixed
+
+- Booking create requests now stay aligned to the backend item payload shape.
+- Booking forms now validate required dates before submission.
+- Booking add-item flow now blocks invalid submissions that provide neither `generator_id` nor `capacity_kva`.
+- Booking edit dialog layout was stabilized for AlertDialog constraints.
 
 ## [0.2.0]
 

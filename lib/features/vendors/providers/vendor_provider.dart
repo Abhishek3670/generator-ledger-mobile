@@ -21,6 +21,8 @@ class VendorProvider extends ChangeNotifier {
   VendorProvider(this._repository);
 
   // Getters for Vendors
+  List<Vendor> get allVendors => _vendors;
+
   List<Vendor> get vendors {
     if (_vendorSearchQuery.isEmpty) return _vendors;
     return _vendors.where((v) => 
@@ -52,6 +54,26 @@ class VendorProvider extends ChangeNotifier {
   void setRentalVendorSearchQuery(String query) {
     _rentalVendorSearchQuery = query;
     notifyListeners();
+  }
+
+  bool get isVendorsLoaded => _vendors.isNotEmpty;
+  bool get isRentalVendorsLoaded => _rentalVendors.isNotEmpty;
+
+  String resolveVendorName(String vendorId) {
+    try {
+      return _vendors.firstWhere((v) => v.id == vendorId).name;
+    } catch (_) {
+      try {
+        return _rentalVendors.firstWhere((rv) => rv.rentalVendorId == vendorId).name;
+      } catch (_) {
+        return 'Unknown Vendor';
+      }
+    }
+  }
+
+  Future<void> ensureVendorsLoaded() async {
+    if (!isVendorsLoaded) await fetchVendors();
+    if (!isRentalVendorsLoaded) await fetchRentalVendors();
   }
 
   String _extractErrorMessage(DioException e) {
