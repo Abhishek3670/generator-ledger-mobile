@@ -11,6 +11,8 @@ import 'features/generators/data/generator_repository.dart';
 import 'features/generators/providers/generator_provider.dart';
 import 'features/bookings/data/booking_repository.dart';
 import 'features/bookings/providers/booking_provider.dart';
+import 'features/dashboard/data/dashboard_repository.dart';
+import 'features/dashboard/providers/dashboard_provider.dart';
 import 'app/router.dart';
 
 void main() async {
@@ -24,6 +26,7 @@ void main() async {
   final vendorRepository = VendorRepository(apiClient);
   final generatorRepository = GeneratorRepository(apiClient);
   final bookingRepository = BookingRepository(apiClient);
+  final dashboardRepository = DashboardRepository(apiClient);
   final permissionService = PermissionService(authProvider);
 
   runApp(
@@ -35,6 +38,9 @@ void main() async {
         ChangeNotifierProvider(create: (_) => VendorProvider(vendorRepository)),
         ChangeNotifierProvider(create: (_) => GeneratorProvider(generatorRepository)),
         ChangeNotifierProvider(create: (_) => BookingProvider(bookingRepository)),
+        ChangeNotifierProvider(
+          create: (_) => DashboardProvider(dashboardRepository, permissionService),
+        ),
       ],
       child: const GensetLedgerApp(),
     ),

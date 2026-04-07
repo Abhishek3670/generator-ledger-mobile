@@ -1,13 +1,462 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:table_calendar/table_calendar.dart';
+import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
+import 'providers/dashboard_provider.dart';
+import 'models/dashboard_models.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
   @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  CalendarFormat _calendarFormat = CalendarFormat.month;
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
+  DayDetail? _selectedDayDetail;
+  bool _isLoadingDayDetail = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<DashboardProvider>().refreshAll();
+    });
+  }
+
+  Future<void> _onDaySelected(DateTime selectedDay, DateTime focusedDay) async {
+    if (!isSameDay(_selectedDay, selectedDay)) {
+      setState(() {
+        _selectedDay = selectedDay;
+        _focusedDay = focusedDay;
+        _isLoadingDayDetail = true;
+        _selectedDayDetail = null;
+      });
+
+      final dateStr = DateFormat('yyyy-MM-dd').format(selectedDay);
+      try {
+        final detail = await context.read<DashboardProvider>().fetchDayDetail(dateStr);
+        if (mounted) {
+          setState(() {
+            _selectedDayDetail = detail;
+          });
+        }
+      } catch (e) {
+        // Error is tracked in the provider's dayDetailError
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoadingDayDetail = false;
+          });
+        }
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final provider = context.watch<DashboardProvider>();
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Dashboard')),
-      body: const Center(child: Text('Dashboard Placeholder')),
+      appBar: AppBar(
+        title: const Text('Genset Ledger'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => provider.refreshAll(),
+          ),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: () => provider.refreshAll(),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildMonitorPanel(provider),
+              _buildCalendarSection(provider),
+              if (_selectedDay != null) _buildDayDetailSection(provider),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
     );
+  }
+
+  Widget _buildMonitorPanel(DashboardProvider provider) {
+    if (provider.isLoadingMonitor) {
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (provider.monitorError != null) {
+      return Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: _buildErrorCard('Monitor Error', provider.monitorError!),
+      );
+    }
+
+    final data = provider.monitorData;
+    if (data == null) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'System Monitor',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              Text(
+                'Last updated: ${data.timestamp}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildMonitorCard(
+                  'CPU',
+                  '${data.cpu.percent}%',
+                  data.cpu.status,
+                  Icons.developer_board,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildMonitorCard(
+                  'Memory',
+                  '${data.memory.percent}%',
+                  data.memory.status,
+                  Icons.memory,
+                  subtitle: '${data.memory.usedMb.toInt()} / ${data.memory.totalMb.toInt()} MB',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _buildTemperatureCard(data.temperature),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMonitorCard(String title, String value, String status, IconData icon, {String? subtitle}) {
+    Color statusColor;
+    switch (status) {
+      case 'normal':
+        statusColor = Colors.green;
+      case 'high':
+        statusColor = Colors.orange;
+      case 'critical':
+        statusColor = Colors.red;
+      default:
+        statusColor = Colors.grey;
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 16, color: Theme.of(context).primaryColor),
+                const SizedBox(width: 4),
+                Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            if (subtitle != null) Text(subtitle, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: statusColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                status.toUpperCase(),
+                style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTemperatureCard(TemperatureStats temp) {
+    Color statusColor;
+    switch (temp.status) {
+      case 'normal':
+        statusColor = Colors.green;
+      case 'high':
+        statusColor = Colors.orange;
+      case 'critical':
+        statusColor = Colors.red;
+      case 'unknown':
+      default:
+        statusColor = Colors.grey;
+    }
+
+    return Card(
+      child: ListTile(
+        leading: Icon(
+          temp.available ? Icons.thermostat : Icons.thermostat_outlined,
+          color: statusColor,
+        ),
+        title: Text(
+          temp.available 
+              ? '${temp.celsius?.toStringAsFixed(1) ?? 'N/A'} °C'
+              : 'Temperature Unavailable',
+        ),
+        subtitle: Text(
+          temp.available 
+              ? '${temp.sensor ?? 'Unknown sensor'} - ${temp.note}'
+              : temp.note,
+        ),
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: statusColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Text(
+            temp.status.toUpperCase(),
+            style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCalendarSection(DashboardProvider provider) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Operational Calendar',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          if (provider.calendarError != null && provider.calendarError!.contains('Access Denied'))
+            _buildGatedCard('Operational Calendar Access Denied', provider.calendarError!)
+          else if (provider.isLoadingCalendar)
+            const Card(
+              child: SizedBox(
+                height: 300,
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            )
+          else if (provider.calendarError != null)
+            _buildErrorCard('Calendar Error', provider.calendarError!)
+          else
+            _buildCalendar(provider),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalendar(DashboardProvider provider) {
+    return Card(
+      child: Column(
+        children: [
+          TableCalendar(
+            firstDay: DateTime.utc(2020, 1, 1),
+            lastDay: DateTime.utc(2030, 12, 31),
+            focusedDay: _focusedDay,
+            calendarFormat: _calendarFormat,
+            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+            onDaySelected: _onDaySelected,
+            onFormatChanged: (format) {
+              setState(() {
+                _calendarFormat = format;
+              });
+            },
+            onPageChanged: (focusedDay) {
+              _focusedDay = focusedDay;
+            },
+            eventLoader: (day) {
+              final dateStr = DateFormat('yyyy-MM-dd').format(day);
+              return provider.calendarEvents.where((e) => e.start == dateStr).toList();
+            },
+            calendarStyle: const CalendarStyle(
+              markerDecoration: BoxDecoration(
+                color: Color(0xFF0F172A),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          if (provider.calendarEvents.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                'No events scheduled in the current range.',
+                style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDayDetailSection(DashboardProvider provider) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Divider(),
+          const SizedBox(height: 16),
+          Text(
+            'Details for ${DateFormat('MMM dd, yyyy').format(_selectedDay!)}',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          if (_isLoadingDayDetail)
+            const Center(child: CircularProgressIndicator())
+          else if (provider.dayDetailError != null)
+            _buildErrorCard('Day Detail Error', provider.dayDetailError!)
+          else if (_selectedDayDetail == null || _selectedDayDetail!.vendors.isEmpty)
+            const Center(child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 24.0),
+              child: Text('No bookings scheduled for this day.'),
+            ))
+          else
+            ..._selectedDayDetail!.vendors.map(_buildVendorSection),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVendorSection(VendorDayDetail vendor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Text(
+            vendor.vendorName,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+        ),
+        ...vendor.bookings.map(_buildBookingCard),
+      ],
+    );
+  }
+
+  Widget _buildBookingCard(BookingDayDetail booking) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
+        onTap: () => context.push('/bookings/${booking.bookingId}'),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Booking #${booking.bookingId}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const Icon(Icons.chevron_right, size: 20),
+                ],
+              ),
+              const Divider(),
+              ...booking.items.map((item) => Padding(
+                    padding: const EdgeInsets.only(top: 4.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Generator: ${item.generatorId} (${item.capacityKva ?? 'N/A'} KVA)'),
+                        Text(
+                          '${_formatTime(item.startDt)} - ${_formatTime(item.endDt)}',
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                        if (item.remarks.isNotEmpty)
+                          Text(
+                            'Remarks: ${item.remarks}',
+                            style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                          ),
+                      ],
+                    ),
+                  )),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorCard(String title, String message) {
+    return Card(
+      color: Colors.red.shade50,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                  Text(message, style: TextStyle(fontSize: 12, color: Colors.red.shade900)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGatedCard(String title, String message) {
+    return Card(
+      color: Colors.grey.shade50,
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Center(
+          child: Column(
+            children: [
+              const Icon(Icons.lock_outline, size: 48, color: Colors.grey),
+              const SizedBox(height: 16),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+              const SizedBox(height: 8),
+              Text(message, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatTime(String dtStr) {
+    try {
+      final dt = DateTime.parse(dtStr);
+      return DateFormat('HH:mm').format(dt);
+    } catch (e) {
+      return dtStr;
+    }
   }
 }
