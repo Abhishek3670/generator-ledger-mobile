@@ -4,6 +4,7 @@ import 'providers/booking_provider.dart';
 import '../vendors/providers/vendor_provider.dart';
 import '../../core/auth/permission_service.dart';
 import 'widgets/booking_item_edit_form.dart';
+import '../../shared/widgets/state_widgets.dart';
 import 'package:intl/intl.dart';
 
 class BookingDetailScreen extends StatefulWidget {
@@ -131,12 +132,23 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       body: Consumer2<BookingProvider, VendorProvider>(
         builder: (context, provider, vendorProvider, child) {
           if (provider.isLoading && provider.selectedBooking == null) {
-            return const Center(child: CircularProgressIndicator());
+            return const LoadingState(message: 'Loading booking details...');
+          }
+
+          if (provider.error != null && provider.selectedBooking == null) {
+            return ErrorState(
+              message: provider.error!,
+              onRetry: () => provider.fetchBookingDetails(widget.bookingId),
+            );
           }
 
           final data = provider.selectedBooking;
           if (data == null) {
-            return Center(child: Text(provider.error ?? 'Booking not found'));
+            return const EmptyState(
+              message: 'Booking not found',
+              subMessage: 'The requested booking may have been deleted or moved.',
+              icon: Icons.search_off,
+            );
           }
 
           final booking = data.booking;

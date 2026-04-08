@@ -4,6 +4,7 @@ import '../providers/vendor_provider.dart';
 import '../../../core/models/vendor.dart';
 import 'vendor_form.dart';
 import '../../../core/auth/permission_service.dart';
+import '../../../shared/widgets/state_widgets.dart';
 
 class VendorList extends StatelessWidget {
   const VendorList({super.key});
@@ -13,27 +14,21 @@ class VendorList extends StatelessWidget {
     return Consumer<VendorProvider>(
       builder: (context, provider, child) {
         if (provider.isVendorsLoading && provider.vendors.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          return const LoadingState(message: 'Loading vendors...');
         }
 
         if (provider.vendorsError != null && provider.vendors.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text('Error: ${provider.vendorsError}'),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => provider.fetchVendors(),
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
+          return ErrorState(
+            message: provider.vendorsError!,
+            onRetry: () => provider.fetchVendors(),
           );
         }
 
         if (provider.vendors.isEmpty) {
-          return const Center(child: Text('No vendors found'));
+          return const EmptyState(
+            message: 'No vendors found',
+            subMessage: 'Try adding a new retailer or adjusting your search.',
+          );
         }
 
         return RefreshIndicator(
@@ -102,18 +97,29 @@ class VendorCard extends StatelessWidget {
     final canManage = context.read<PermissionService>().can('vendor_management');
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ListTile(
-        title: Text(vendor.name),
-        subtitle: Text('${vendor.place} • ${vendor.phone}'),
-        trailing: canManage
-            ? Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(icon: const Icon(Icons.edit), onPressed: () => _editVendor(context)),
-                  IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => _confirmDelete(context)),
-                ],
-              )
-            : null,
+      child: Semantics(
+        label: 'Vendor: ${vendor.name}, Location: ${vendor.place}',
+        child: ListTile(
+          title: Text(vendor.name),
+          subtitle: Text('${vendor.place} • ${vendor.phone}'),
+          trailing: canManage
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () => _editVendor(context),
+                      tooltip: 'Edit Vendor',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () => _confirmDelete(context),
+                      tooltip: 'Delete Vendor',
+                    ),
+                  ],
+                )
+              : null,
+        ),
       ),
     );
   }

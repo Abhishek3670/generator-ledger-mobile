@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import 'providers/billing_provider.dart';
-import 'models/billing_models.dart';
-import '../../../core/auth/permission_service.dart';
+import '../../core/auth/permission_service.dart';
+import '../../shared/widgets/state_widgets.dart';
 
 class BillingScreen extends StatefulWidget {
   const BillingScreen({super.key});
@@ -70,17 +70,8 @@ class _BillingScreenState extends State<BillingScreen> {
     if (!permissionService.can(PermissionService.billingAccess)) {
       return Scaffold(
         appBar: AppBar(title: const Text('Billing')),
-        body: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.lock_outline, size: 64, color: Colors.grey),
-              SizedBox(height: 16),
-              Text('Access Denied', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              SizedBox(height: 8),
-              Text('You do not have permission to view billing data.', textAlign: TextAlign.center),
-            ],
-          ),
+        body: const AccessDeniedState(
+          message: 'You do not have permission to view billing data.',
         ),
       );
     }
@@ -91,6 +82,7 @@ class _BillingScreenState extends State<BillingScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh billing data',
             onPressed: isInvalidRange ? null : _fetchData,
           ),
         ],
@@ -100,26 +92,21 @@ class _BillingScreenState extends State<BillingScreen> {
           _buildFilters(context, provider),
           if (isInvalidRange)
             const Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.date_range, color: Colors.orange, size: 48),
-                    SizedBox(height: 16),
-                    Text(
-                      'Invalid Date Range',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(height: 8),
-                    Text('"From" date cannot be later than "To" date.'),
-                  ],
-                ),
+              child: EmptyState(
+                icon: Icons.date_range,
+                message: 'Invalid Date Range',
+                subMessage: '"From" date cannot be later than "To" date.',
               ),
             )
           else if (provider.isLoading)
-            const Expanded(child: Center(child: CircularProgressIndicator()))
+            const Expanded(child: LoadingState(message: 'Loading billing lines...'))
           else if (provider.error != null)
-            Expanded(child: Center(child: _buildErrorWidget(provider.error!)))
+            Expanded(
+              child: ErrorState(
+                message: provider.error!,
+                onRetry: _fetchData,
+              ),
+            )
           else
             Expanded(child: _buildList(provider)),
         ],
@@ -194,7 +181,10 @@ class _BillingScreenState extends State<BillingScreen> {
   Widget _buildList(BillingProvider provider) {
     final rows = provider.filteredRows;
     if (rows.isEmpty) {
-      return const Center(child: Text('No billing lines found for this period.'));
+      return const EmptyState(
+        message: 'No billing lines found',
+        subMessage: 'Try adjusting your date range or filters.',
+      );
     }
 
     return ListView.builder(

@@ -4,6 +4,7 @@ import '../providers/generator_provider.dart';
 import '../../../core/models/generator.dart';
 import 'generator_form.dart';
 import '../../../core/auth/permission_service.dart';
+import '../../../shared/widgets/state_widgets.dart';
 
 class GeneratorList extends StatelessWidget {
   final String inventoryType;
@@ -19,27 +20,21 @@ class GeneratorList extends StatelessWidget {
             .toList();
 
         if (provider.isLoading && provider.generators.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          return LoadingState(message: 'Loading $inventoryType generators...');
         }
 
         if (provider.error != null && provider.generators.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text('Error: ${provider.error}'),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => provider.fetchGenerators(),
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
+          return ErrorState(
+            message: provider.error!,
+            onRetry: () => provider.fetchGenerators(),
           );
         }
 
         if (filteredGenerators.isEmpty) {
-          return Center(child: Text('No $inventoryType generators found'));
+          return EmptyState(
+            message: 'No $inventoryType generators found',
+            subMessage: 'Try a different category or adjusting your search.',
+          );
         }
 
         return RefreshIndicator(
@@ -86,33 +81,37 @@ class GeneratorCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: statusColor.withOpacity(0.1),
-          child: Text(
-            '${generator.capacity}',
-            style: TextStyle(color: statusColor, fontWeight: FontWeight.bold),
+      child: Semantics(
+        label: 'Generator: ${generator.identification}, Type: ${generator.type}, Status: ${generator.status}',
+        child: ListTile(
+          leading: CircleAvatar(
+            backgroundColor: statusColor.withOpacity(0.1),
+            child: Text(
+              '${generator.capacity}',
+              style: TextStyle(color: statusColor, fontWeight: FontWeight.bold),
+            ),
           ),
+          title: Text(generator.identification),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${generator.type} • ${generator.status}'),
+              if (generator.inventoryType == 'permanent' && generator.rentalVendorName != null)
+                Text(
+                  'Assigned to: ${generator.rentalVendorName}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+            ],
+          ),
+          isThreeLine: generator.inventoryType == 'permanent',
+          trailing: canManage
+              ? IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () => _editGenerator(context),
+                  tooltip: 'Edit Generator',
+                )
+              : null,
         ),
-        title: Text(generator.identification),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('${generator.type} • ${generator.status}'),
-            if (generator.inventoryType == 'permanent' && generator.rentalVendorName != null)
-              Text(
-                'Assigned to: ${generator.rentalVendorName}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-          ],
-        ),
-        isThreeLine: generator.inventoryType == 'permanent',
-        trailing: canManage
-            ? IconButton(
-                icon: const Icon(Icons.edit),
-                onPressed: () => _editGenerator(context),
-              )
-            : null,
       ),
     );
   }

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import 'providers/dashboard_provider.dart';
 import 'models/dashboard_models.dart';
+import '../../shared/widgets/state_widgets.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -93,14 +94,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (provider.isLoadingMonitor) {
       return const Padding(
         padding: EdgeInsets.all(16.0),
-        child: Center(child: CircularProgressIndicator()),
+        child: LoadingState(message: 'Updating monitor...'),
       );
     }
 
     if (provider.monitorError != null) {
       return Padding(
         padding: const EdgeInsets.all(16.0),
-        child: _buildErrorCard('Monitor Error', provider.monitorError!),
+        child: ErrorState(
+          message: provider.monitorError!,
+          onRetry: () => provider.refreshMonitor(),
+        ),
       );
     }
 
@@ -172,34 +176,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 16, color: Theme.of(context).primaryColor),
-                const SizedBox(width: 4),
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            if (subtitle != null) Text(subtitle, style: const TextStyle(fontSize: 10, color: Colors.grey)),
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(4),
+      child: Semantics(
+        label: '$title status is $status, current value $value',
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, size: 16, color: Theme.of(context).primaryColor),
+                  const SizedBox(width: 4),
+                  Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
+                ],
               ),
-              child: Text(
-                status.toUpperCase(),
-                style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold),
+              const SizedBox(height: 8),
+              Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              if (subtitle != null) Text(subtitle, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  status.toUpperCase(),
+                  style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -222,31 +229,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
         statusColor = Colors.grey;
     }
 
+    final tempText = temp.available
+        ? '${temp.celsius?.toStringAsFixed(1) ?? 'N/A'} °C'
+        : 'Temperature Unavailable';
+    final subText = temp.available
+        ? '${temp.sensor ?? 'Unknown sensor'} - ${temp.note}'
+        : temp.note;
+
     return Card(
-      child: ListTile(
-        leading: Icon(
-          temp.available ? Icons.thermostat : Icons.thermostat_outlined,
-          color: statusColor,
-        ),
-        title: Text(
-          temp.available 
-              ? '${temp.celsius?.toStringAsFixed(1) ?? 'N/A'} °C'
-              : 'Temperature Unavailable',
-        ),
-        subtitle: Text(
-          temp.available 
-              ? '${temp.sensor ?? 'Unknown sensor'} - ${temp.note}'
-              : temp.note,
-        ),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: statusColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(4),
+      child: Semantics(
+        label: 'System temperature: $tempText. Status: ${temp.status}. Note: $subText',
+        child: ListTile(
+          leading: Icon(
+            temp.available ? Icons.thermostat : Icons.thermostat_outlined,
+            color: statusColor,
           ),
-          child: Text(
-            temp.status.toUpperCase(),
-            style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold),
+          title: Text(tempText),
+          subtitle: Text(subText),
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              temp.status.toUpperCase(),
+              style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold),
+            ),
           ),
         ),
       ),
@@ -265,16 +274,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 12),
           if (provider.calendarError != null && provider.calendarError!.contains('Access Denied'))
-            _buildGatedCard('Operational Calendar Access Denied', provider.calendarError!)
+            const AccessDeniedState(message: 'Operational Calendar Access Denied')
           else if (provider.isLoadingCalendar)
             const Card(
               child: SizedBox(
                 height: 300,
-                child: Center(child: CircularProgressIndicator()),
+                child: LoadingState(message: 'Loading calendar...'),
               ),
             )
           else if (provider.calendarError != null)
-            _buildErrorCard('Calendar Error', provider.calendarError!)
+            ErrorState(
+              message: provider.calendarError!,
+              onRetry: () => provider.refreshCalendar(),
+            )
           else
             _buildCalendar(provider),
         ],
@@ -339,14 +351,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 12),
           if (_isLoadingDayDetail)
-            const Center(child: CircularProgressIndicator())
+            const LoadingState(message: 'Loading day details...')
           else if (provider.dayDetailError != null)
-            _buildErrorCard('Day Detail Error', provider.dayDetailError!)
+            ErrorState(
+              message: provider.dayDetailError!,
+              onRetry: () => _onDaySelected(_selectedDay!, _focusedDay),
+            )
           else if (_selectedDayDetail == null || _selectedDayDetail!.vendors.isEmpty)
-            const Center(child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 24.0),
-              child: Text('No bookings scheduled for this day.'),
-            ))
+            const EmptyState(
+              message: 'No bookings scheduled',
+              subMessage: 'No activity for this selected date.',
+            )
           else
             ..._selectedDayDetail!.vendors.map(_buildVendorSection),
         ],
@@ -375,38 +390,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
       margin: const EdgeInsets.only(bottom: 8),
       child: InkWell(
         onTap: () => context.push('/bookings/${booking.bookingId}'),
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Booking #${booking.bookingId}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                  const Icon(Icons.chevron_right, size: 20),
-                ],
-              ),
-              const Divider(),
-              ...booking.items.map((item) => Padding(
-                    padding: const EdgeInsets.only(top: 4.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Generator: ${item.generatorId} (${item.capacityKva ?? 'N/A'} KVA)'),
-                        Text(
-                          '${_formatTime(item.startDt)} - ${_formatTime(item.endDt)}',
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                        if (item.remarks.isNotEmpty)
+        child: Semantics(
+          label: 'Booking #${booking.bookingId}',
+          hint: 'Double tap to view booking details',
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Booking #${booking.bookingId}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    const Icon(Icons.chevron_right, size: 20),
+                  ],
+                ),
+                const Divider(),
+                ...booking.items.map((item) => Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Generator: ${item.generatorId} (${item.capacityKva ?? 'N/A'} KVA)'),
                           Text(
-                            'Remarks: ${item.remarks}',
-                            style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                            '${_formatTime(item.startDt)} - ${_formatTime(item.endDt)}',
+                            style: const TextStyle(fontSize: 12, color: Colors.grey),
                           ),
-                      ],
-                    ),
-                  )),
-            ],
+                          if (item.remarks.isNotEmpty)
+                            Text(
+                              'Remarks: ${item.remarks}',
+                              style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                            ),
+                        ],
+                      ),
+                    )),
+              ],
+            ),
           ),
         ),
       ),

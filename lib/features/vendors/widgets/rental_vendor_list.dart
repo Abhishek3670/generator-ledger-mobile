@@ -4,6 +4,7 @@ import '../providers/vendor_provider.dart';
 import '../../../core/models/vendor.dart';
 import 'vendor_form.dart';
 import '../../../core/auth/permission_service.dart';
+import '../../../shared/widgets/state_widgets.dart';
 
 class RentalVendorList extends StatelessWidget {
   const RentalVendorList({super.key});
@@ -13,27 +14,21 @@ class RentalVendorList extends StatelessWidget {
     return Consumer<VendorProvider>(
       builder: (context, provider, child) {
         if (provider.isRentalVendorsLoading && provider.rentalVendors.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          return const LoadingState(message: 'Loading rental partners...');
         }
 
         if (provider.rentalVendorsError != null && provider.rentalVendors.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text('Error: ${provider.rentalVendorsError}'),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => provider.fetchRentalVendors(),
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
+          return ErrorState(
+            message: provider.rentalVendorsError!,
+            onRetry: () => provider.fetchRentalVendors(),
           );
         }
 
         if (provider.rentalVendors.isEmpty) {
-          return const Center(child: Text('No rental partners found'));
+          return const EmptyState(
+            message: 'No rental partners found',
+            subMessage: 'Try adding a new partner or adjusting your search.',
+          );
         }
 
         return RefreshIndicator(
@@ -102,18 +97,29 @@ class RentalVendorCard extends StatelessWidget {
     final canManage = context.read<PermissionService>().can('vendor_management');
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ListTile(
-        title: Text(vendor.name),
-        subtitle: Text('${vendor.place} • ${vendor.phone}'),
-        trailing: canManage
-            ? Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(icon: const Icon(Icons.edit), onPressed: () => _editVendor(context)),
-                  IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => _confirmDelete(context)),
-                ],
-              )
-            : null,
+      child: Semantics(
+        label: 'Rental Partner: ${vendor.name}, Location: ${vendor.place}',
+        child: ListTile(
+          title: Text(vendor.name),
+          subtitle: Text('${vendor.place} • ${vendor.phone}'),
+          trailing: canManage
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () => _editVendor(context),
+                      tooltip: 'Edit Rental Partner',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () => _confirmDelete(context),
+                      tooltip: 'Delete Rental Partner',
+                    ),
+                  ],
+                )
+              : null,
+        ),
       ),
     );
   }

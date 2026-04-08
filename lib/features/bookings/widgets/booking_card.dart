@@ -32,42 +32,46 @@ class BookingCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ListTile(
-        onTap: () => context.push('/bookings/${booking.id}'),
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(
-                vendorName,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                booking.status,
-                style: TextStyle(
-                  color: statusColor,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+      child: Semantics(
+        label: 'Booking for $vendorName, Status: ${booking.status}',
+        hint: 'Double tap to view details',
+        child: ListTile(
+          onTap: () => context.push('/bookings/${booking.id}'),
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  vendorName,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
-            ),
-          ],
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  booking.status,
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 4),
+              Text('ID: ${booking.id}'),
+              Text('Created: ${dateFormat.format(booking.createdAt)}'),
+            ],
+          ),
+          trailing: const Icon(Icons.chevron_right),
         ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Text('ID: ${booking.id}'),
-            Text('Created: ${dateFormat.format(booking.createdAt)}'),
-          ],
-        ),
-        trailing: const Icon(Icons.chevron_right),
       ),
     );
   }

@@ -6,6 +6,7 @@ import '../../core/auth/permission_service.dart';
 import '../../shared/widgets/search_bar.dart';
 import 'widgets/booking_card.dart';
 import 'widgets/booking_form.dart';
+import '../../shared/widgets/state_widgets.dart';
 
 class BookingsListScreen extends StatefulWidget {
   const BookingsListScreen({super.key});
@@ -48,22 +49,13 @@ class _BookingsListScreenState extends State<BookingsListScreen> {
                 child: Consumer<BookingProvider>(
                   builder: (context, provider, child) {
                     if (provider.isLoading && provider.bookings.isEmpty) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const LoadingState(message: 'Loading bookings...');
                     }
 
                     if (provider.error != null && provider.bookings.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text('Error: ${provider.error}'),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: () => provider.fetchBookings(),
-                              child: const Text('Retry'),
-                            ),
-                          ],
-                        ),
+                      return ErrorState(
+                        message: provider.error!,
+                        onRetry: () => provider.fetchBookings(),
                       );
                     }
 
@@ -74,7 +66,10 @@ class _BookingsListScreenState extends State<BookingsListScreen> {
                     }).toList();
 
                     if (filtered.isEmpty) {
-                      return const Center(child: Text('No bookings found'));
+                      return const EmptyState(
+                        message: 'No bookings found',
+                        subMessage: 'Try a different search or add a new booking.',
+                      );
                     }
 
                     return RefreshIndicator(
@@ -103,6 +98,7 @@ class _BookingsListScreenState extends State<BookingsListScreen> {
                 context: context,
                 builder: (context) => const BookingForm(),
               ),
+              tooltip: 'Add new booking',
               child: const Icon(Icons.add),
             )
           : null,
