@@ -8,10 +8,10 @@ class VendorProvider extends ChangeNotifier {
 
   List<Vendor> _vendors = [];
   List<RentalVendor> _rentalVendors = [];
-  
+
   bool _isVendorsLoading = false;
   String? _vendorsError;
-  
+
   bool _isRentalVendorsLoading = false;
   String? _rentalVendorsError;
 
@@ -25,24 +25,32 @@ class VendorProvider extends ChangeNotifier {
 
   List<Vendor> get vendors {
     if (_vendorSearchQuery.isEmpty) return _vendors;
-    return _vendors.where((v) => 
-      v.name.toLowerCase().contains(_vendorSearchQuery.toLowerCase()) ||
-      v.place.toLowerCase().contains(_vendorSearchQuery.toLowerCase()) ||
-      v.phone.contains(_vendorSearchQuery)
-    ).toList();
+    return _vendors
+        .where((v) =>
+            v.name.toLowerCase().contains(_vendorSearchQuery.toLowerCase()) ||
+            v.place.toLowerCase().contains(_vendorSearchQuery.toLowerCase()) ||
+            v.phone.contains(_vendorSearchQuery))
+        .toList();
   }
+
   bool get isVendorsLoading => _isVendorsLoading;
   String? get vendorsError => _vendorsError;
 
   // Getters for Rental Vendors
   List<RentalVendor> get rentalVendors {
     if (_rentalVendorSearchQuery.isEmpty) return _rentalVendors;
-    return _rentalVendors.where((v) => 
-      v.name.toLowerCase().contains(_rentalVendorSearchQuery.toLowerCase()) ||
-      v.place.toLowerCase().contains(_rentalVendorSearchQuery.toLowerCase()) ||
-      v.phone.contains(_rentalVendorSearchQuery)
-    ).toList();
+    return _rentalVendors
+        .where((v) =>
+            v.name
+                .toLowerCase()
+                .contains(_rentalVendorSearchQuery.toLowerCase()) ||
+            v.place
+                .toLowerCase()
+                .contains(_rentalVendorSearchQuery.toLowerCase()) ||
+            v.phone.contains(_rentalVendorSearchQuery))
+        .toList();
   }
+
   bool get isRentalVendorsLoading => _isRentalVendorsLoading;
   String? get rentalVendorsError => _rentalVendorsError;
 
@@ -64,7 +72,9 @@ class VendorProvider extends ChangeNotifier {
       return _vendors.firstWhere((v) => v.id == vendorId).name;
     } catch (_) {
       try {
-        return _rentalVendors.firstWhere((rv) => rv.rentalVendorId == vendorId).name;
+        return _rentalVendors
+            .firstWhere((rv) => rv.rentalVendorId == vendorId)
+            .name;
       } catch (_) {
         return 'Unknown Vendor';
       }
@@ -147,7 +157,8 @@ class VendorProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateVendor(String id, {
+  Future<void> updateVendor(
+    String id, {
     required String name,
     String? place,
     String? phone,
@@ -196,7 +207,8 @@ class VendorProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateRentalVendor(String id, {
+  Future<void> updateRentalVendor(
+    String id, {
     required String name,
     String? place,
     String? phone,

@@ -43,22 +43,26 @@ class _BookingItemEditFormState extends State<BookingItemEditForm> {
   @override
   void initState() {
     super.initState();
-    _updates = widget.existingItems.map((item) => BookingItemDraft(
-      id: item.id,
-      capacityKva: item.capacityKva,
-      startDt: DateFormat('yyyy-MM-dd HH:mm').format(item.startDt),
-      endDt: DateFormat('yyyy-MM-dd HH:mm').format(item.endDt),
-      remarks: item.remarks,
-    )).toList();
+    _updates = widget.existingItems
+        .map((item) => BookingItemDraft(
+              id: item.id,
+              capacityKva: item.capacityKva,
+              startDt: DateFormat('yyyy-MM-dd HH:mm').format(item.startDt),
+              endDt: DateFormat('yyyy-MM-dd HH:mm').format(item.endDt),
+              remarks: item.remarks,
+            ))
+        .toList();
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     // Validation: Cannot remove all items
     if (_removes.length == widget.existingItems.length) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cannot remove all booking items. Use Delete Booking instead.')),
+        const SnackBar(
+            content: Text(
+                'Cannot remove all booking items. Use Delete Booking instead.')),
       );
       return;
     }
@@ -74,17 +78,20 @@ class _BookingItemEditFormState extends State<BookingItemEditForm> {
           capacityKva: _newCapacityKva,
           startDt: _newStartController.text,
           endDt: _newEndController.text,
-          remarks: _newRemarksController.text.isEmpty ? null : _newRemarksController.text,
+          remarks: _newRemarksController.text.isEmpty
+              ? null
+              : _newRemarksController.text,
         );
       } else {
         final updatesPayload = _updates
             .where((u) => !_removes.contains(u.id))
             .map((u) => {
-              'id': u.id,
-              'start_dt': u.startDt,
-              'end_dt': u.endDt,
-              'remarks': u.remarks,
-            }).toList();
+                  'id': u.id,
+                  'start_dt': u.startDt,
+                  'end_dt': u.endDt,
+                  'remarks': u.remarks,
+                })
+            .toList();
 
         await provider.bulkUpdateItems(
           widget.bookingId,
@@ -135,10 +142,16 @@ class _BookingItemEditFormState extends State<BookingItemEditForm> {
                             children: [
                               Row(
                                 children: [
-                                  Text('Item #${update.id}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  Text('Item #${update.id}',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold)),
                                   const Spacer(),
                                   IconButton(
-                                    icon: Icon(isRemoved ? Icons.undo : Icons.delete, color: isRemoved ? Colors.green : Colors.red),
+                                    icon: Icon(
+                                        isRemoved ? Icons.undo : Icons.delete,
+                                        color: isRemoved
+                                            ? Colors.green
+                                            : Colors.red),
                                     onPressed: () {
                                       setState(() {
                                         if (isRemoved) {
@@ -154,19 +167,26 @@ class _BookingItemEditFormState extends State<BookingItemEditForm> {
                               if (!isRemoved) ...[
                                 TextFormField(
                                   initialValue: update.startDt,
-                                  decoration: const InputDecoration(labelText: 'Start (YYYY-MM-DD HH:mm)'),
+                                  decoration: const InputDecoration(
+                                      labelText: 'Start (YYYY-MM-DD HH:mm)'),
                                   onChanged: (v) => update.startDt = v,
-                                  validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                                  validator: (v) => (v == null || v.isEmpty)
+                                      ? 'Required'
+                                      : null,
                                 ),
                                 TextFormField(
                                   initialValue: update.endDt,
-                                  decoration: const InputDecoration(labelText: 'End (YYYY-MM-DD HH:mm)'),
+                                  decoration: const InputDecoration(
+                                      labelText: 'End (YYYY-MM-DD HH:mm)'),
                                   onChanged: (v) => update.endDt = v,
-                                  validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                                  validator: (v) => (v == null || v.isEmpty)
+                                      ? 'Required'
+                                      : null,
                                 ),
                                 TextFormField(
                                   initialValue: update.remarks,
-                                  decoration: const InputDecoration(labelText: 'Remarks'),
+                                  decoration: const InputDecoration(
+                                      labelText: 'Remarks'),
                                   onChanged: (v) => update.remarks = v,
                                 ),
                               ],
@@ -189,7 +209,8 @@ class _BookingItemEditFormState extends State<BookingItemEditForm> {
                         keyboardType: TextInputType.number,
                         onChanged: (v) => _newCapacityKva = int.tryParse(v),
                         validator: (v) {
-                          if (_newGeneratorId == null && (v == null || v.isEmpty)) {
+                          if (_newGeneratorId == null &&
+                              (v == null || v.isEmpty)) {
                             return 'Capacity or Generator ID required';
                           }
                           return null;
@@ -197,13 +218,17 @@ class _BookingItemEditFormState extends State<BookingItemEditForm> {
                       ),
                       TextFormField(
                         controller: _newStartController,
-                        decoration: const InputDecoration(labelText: 'Start (YYYY-MM-DD HH:mm)'),
-                        validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                        decoration: const InputDecoration(
+                            labelText: 'Start (YYYY-MM-DD HH:mm)'),
+                        validator: (v) =>
+                            (v == null || v.isEmpty) ? 'Required' : null,
                       ),
                       TextFormField(
                         controller: _newEndController,
-                        decoration: const InputDecoration(labelText: 'End (YYYY-MM-DD HH:mm)'),
-                        validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                        decoration: const InputDecoration(
+                            labelText: 'End (YYYY-MM-DD HH:mm)'),
+                        validator: (v) =>
+                            (v == null || v.isEmpty) ? 'Required' : null,
                       ),
                       TextFormField(
                         controller: _newRemarksController,
@@ -248,5 +273,6 @@ class BookingItemDraft {
   String? endDt;
   String? remarks;
 
-  BookingItemDraft({this.id, this.capacityKva, this.startDt, this.endDt, this.remarks});
+  BookingItemDraft(
+      {this.id, this.capacityKva, this.startDt, this.endDt, this.remarks});
 }

@@ -75,7 +75,8 @@ class BookingProvider extends ChangeNotifier {
   }) async {
     _error = null;
     try {
-      final result = await _repository.createBooking(vendorId: vendorId, items: items);
+      final result =
+          await _repository.createBooking(vendorId: vendorId, items: items);
       await fetchBookings();
       return result;
     } on DioException catch (e) {
@@ -88,7 +89,8 @@ class BookingProvider extends ChangeNotifier {
     }
   }
 
-  Future<Map<String, dynamic>?> addBookingItem(String bookingId, {
+  Future<Map<String, dynamic>?> addBookingItem(
+    String bookingId, {
     String? generatorId,
     int? capacityKva,
     required String startDt,
@@ -117,13 +119,15 @@ class BookingProvider extends ChangeNotifier {
     }
   }
 
-  Future<Map<String, dynamic>?> bulkUpdateItems(String bookingId, {
+  Future<Map<String, dynamic>?> bulkUpdateItems(
+    String bookingId, {
     required List<Map<String, dynamic>> updates,
     required List<int> removes,
   }) async {
     _error = null;
     try {
-      await _repository.bulkUpdateItems(bookingId, updates: updates, removes: removes);
+      await _repository.bulkUpdateItems(bookingId,
+          updates: updates, removes: removes);
       await fetchBookingDetails(bookingId);
       await fetchBookings();
       return {'success': true};

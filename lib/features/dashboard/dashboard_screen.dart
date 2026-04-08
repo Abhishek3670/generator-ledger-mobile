@@ -40,7 +40,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       final dateStr = DateFormat('yyyy-MM-dd').format(selectedDay);
       try {
-        final detail = await context.read<DashboardProvider>().fetchDayDetail(dateStr);
+        final detail =
+            await context.read<DashboardProvider>().fetchDayDetail(dateStr);
         if (mounted) {
           setState(() {
             _selectedDayDetail = detail;
@@ -103,7 +104,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         padding: const EdgeInsets.all(16.0),
         child: ErrorState(
           message: provider.monitorError!,
-          onRetry: () => provider.refreshMonitor(),
+          onRetry: () => provider.fetchMonitorData(),
         ),
       );
     }
@@ -121,7 +122,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Text(
                 'System Monitor',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(context)
+                    .textTheme
+                    .titleLarge
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
               Text(
                 'Last updated: ${data.timestamp}',
@@ -147,7 +151,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   '${data.memory.percent}%',
                   data.memory.status,
                   Icons.memory,
-                  subtitle: '${data.memory.usedMb.toInt()} / ${data.memory.totalMb.toInt()} MB',
+                  subtitle:
+                      '${data.memory.usedMb.toInt()} / ${data.memory.totalMb.toInt()} MB',
                 ),
               ),
             ],
@@ -159,7 +164,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildMonitorCard(String title, String value, String status, IconData icon, {String? subtitle}) {
+  Widget _buildMonitorCard(
+      String title, String value, String status, IconData icon,
+      {String? subtitle}) {
     Color statusColor;
     switch (status) {
       case 'normal':
@@ -187,12 +194,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   Icon(icon, size: 16, color: Theme.of(context).primaryColor),
                   const SizedBox(width: 4),
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
+                  Text(title,
+                      style: const TextStyle(fontWeight: FontWeight.w500)),
                 ],
               ),
               const SizedBox(height: 8),
-              Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              if (subtitle != null) Text(subtitle, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+              Text(value,
+                  style: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold)),
+              if (subtitle != null)
+                Text(subtitle,
+                    style: const TextStyle(fontSize: 10, color: Colors.grey)),
               const SizedBox(height: 4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -202,7 +214,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 child: Text(
                   status.toUpperCase(),
-                  style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      color: statusColor,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -238,7 +253,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Card(
       child: Semantics(
-        label: 'System temperature: $tempText. Status: ${temp.status}. Note: $subText',
+        label:
+            'System temperature: $tempText. Status: ${temp.status}. Note: $subText',
         child: ListTile(
           leading: Icon(
             temp.available ? Icons.thermostat : Icons.thermostat_outlined,
@@ -254,7 +270,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             child: Text(
               temp.status.toUpperCase(),
-              style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: statusColor,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold),
             ),
           ),
         ),
@@ -270,11 +289,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           Text(
             'Operational Calendar',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
-          if (provider.calendarError != null && provider.calendarError!.contains('Access Denied'))
-            const AccessDeniedState(message: 'Operational Calendar Access Denied')
+          if (provider.calendarError != null &&
+              provider.calendarError!.contains('Access Denied'))
+            const AccessDeniedState(
+                message: 'Operational Calendar Access Denied')
           else if (provider.isLoadingCalendar)
             const Card(
               child: SizedBox(
@@ -285,7 +309,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           else if (provider.calendarError != null)
             ErrorState(
               message: provider.calendarError!,
-              onRetry: () => provider.refreshCalendar(),
+              onRetry: () => provider.fetchCalendarEvents(),
             )
           else
             _buildCalendar(provider),
@@ -315,7 +339,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             },
             eventLoader: (day) {
               final dateStr = DateFormat('yyyy-MM-dd').format(day);
-              return provider.calendarEvents.where((e) => e.start == dateStr).toList();
+              return provider.calendarEvents
+                  .where((e) => e.start == dateStr)
+                  .toList();
             },
             calendarStyle: const CalendarStyle(
               markerDecoration: BoxDecoration(
@@ -329,7 +355,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               padding: EdgeInsets.all(16.0),
               child: Text(
                 'No events scheduled in the current range.',
-                style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+                style:
+                    TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
               ),
             ),
         ],
@@ -347,7 +374,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 16),
           Text(
             'Details for ${DateFormat('MMM dd, yyyy').format(_selectedDay!)}',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           if (_isLoadingDayDetail)
@@ -357,7 +387,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               message: provider.dayDetailError!,
               onRetry: () => _onDaySelected(_selectedDay!, _focusedDay),
             )
-          else if (_selectedDayDetail == null || _selectedDayDetail!.vendors.isEmpty)
+          else if (_selectedDayDetail == null ||
+              _selectedDayDetail!.vendors.isEmpty)
             const EmptyState(
               message: 'No bookings scheduled',
               subMessage: 'No activity for this selected date.',
@@ -401,7 +432,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Booking #${booking.bookingId}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text('Booking #${booking.bookingId}',
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
                     const Icon(Icons.chevron_right, size: 20),
                   ],
                 ),
@@ -411,15 +443,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Generator: ${item.generatorId} (${item.capacityKva ?? 'N/A'} KVA)'),
+                          Text(
+                              'Generator: ${item.generatorId} (${item.capacityKva ?? 'N/A'} KVA)'),
                           Text(
                             '${_formatTime(item.startDt)} - ${_formatTime(item.endDt)}',
-                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                            style: const TextStyle(
+                                fontSize: 12, color: Colors.grey),
                           ),
                           if (item.remarks.isNotEmpty)
                             Text(
                               'Remarks: ${item.remarks}',
-                              style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                              style: const TextStyle(
+                                  fontSize: 12, fontStyle: FontStyle.italic),
                             ),
                         ],
                       ),
@@ -445,8 +480,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-                  Text(message, style: TextStyle(fontSize: 12, color: Colors.red.shade900)),
+                  Text(title,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.red)),
+                  Text(message,
+                      style:
+                          TextStyle(fontSize: 12, color: Colors.red.shade900)),
                 ],
               ),
             ),
@@ -466,9 +505,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               const Icon(Icons.lock_outline, size: 48, color: Colors.grey),
               const SizedBox(height: 16),
-              Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+              Text(title,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.grey)),
               const SizedBox(height: 8),
-              Text(message, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              Text(message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey)),
             ],
           ),
         ),

@@ -14,7 +14,8 @@ class GeneratorsScreen extends StatefulWidget {
   State<GeneratorsScreen> createState() => _GeneratorsScreenState();
 }
 
-class _GeneratorsScreenState extends State<GeneratorsScreen> with SingleTickerProviderStateMixin {
+class _GeneratorsScreenState extends State<GeneratorsScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
 
@@ -56,7 +57,8 @@ class _GeneratorsScreenState extends State<GeneratorsScreen> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
-    final canManageGenerators = context.read<PermissionService>().can('generator_management');
+    final canManageGenerators =
+        context.read<PermissionService>().can('generator_management');
 
     return Scaffold(
       appBar: PreferredSize(

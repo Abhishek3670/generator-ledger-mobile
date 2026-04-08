@@ -40,7 +40,8 @@ class _BookingFormState extends State<BookingForm> {
         items: payload,
       );
 
-      if (result['success'] == false && result['error_code'] == 'retailer_out_of_stock') {
+      if (result['success'] == false &&
+          result['error_code'] == 'retailer_out_of_stock') {
         if (mounted) _handleEmergencySuggestions(result);
       } else if (mounted) {
         final message = result['message'] ?? 'Booking created';
@@ -71,7 +72,8 @@ class _BookingFormState extends State<BookingForm> {
       barrierDismissible: false,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
-          final allResolved = suggestions.every((s) => _items[s.itemIndex].generatorId != null);
+          final allResolved =
+              suggestions.every((s) => _items[s.itemIndex].generatorId != null);
 
           return AlertDialog(
             title: const Text('Retailer Out of Stock'),
@@ -83,7 +85,10 @@ class _BookingFormState extends State<BookingForm> {
                 itemBuilder: (context, index) {
                   final s = suggestions[index];
                   final selectedId = _items[s.itemIndex].generatorId;
-                  final selectedOption = selectedId == null ? null : s.emergencyOptions.firstWhere((o) => o.generatorId == selectedId);
+                  final selectedOption = selectedId == null
+                      ? null
+                      : s.emergencyOptions
+                          .firstWhere((o) => o.generatorId == selectedId);
 
                   return Card(
                     margin: const EdgeInsets.symmetric(vertical: 4),
@@ -92,13 +97,16 @@ class _BookingFormState extends State<BookingForm> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Date: ${s.date}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          Text('Date: ${s.date}',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold)),
                           Text('Capacity: ${s.capacityKva} kVA'),
                           const Divider(),
                           if (selectedOption != null)
                             ListTile(
                               title: Text(selectedOption.identification),
-                              subtitle: const Text('Selected', style: TextStyle(color: Colors.green)),
+                              subtitle: const Text('Selected',
+                                  style: TextStyle(color: Colors.green)),
                               trailing: TextButton(
                                 onPressed: () => setDialogState(() {
                                   _items[s.itemIndex].generatorId = null;
@@ -109,9 +117,11 @@ class _BookingFormState extends State<BookingForm> {
                           else
                             ...s.emergencyOptions.map((opt) => ListTile(
                                   title: Text(opt.identification),
-                                  subtitle: Text('${opt.capacityKva} kVA • ${opt.type}'),
+                                  subtitle: Text(
+                                      '${opt.capacityKva} kVA • ${opt.type}'),
                                   onTap: () => setDialogState(() {
-                                    _items[s.itemIndex].generatorId = opt.generatorId;
+                                    _items[s.itemIndex].generatorId =
+                                        opt.generatorId;
                                   }),
                                 )),
                         ],
@@ -122,7 +132,9 @@ class _BookingFormState extends State<BookingForm> {
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+              TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel')),
               ElevatedButton(
                 onPressed: allResolved
                     ? () {
@@ -153,13 +165,17 @@ class _BookingFormState extends State<BookingForm> {
             children: [
               DropdownButtonFormField<String>(
                 value: _selectedVendorId,
-                items: vendors.map((v) => DropdownMenuItem(value: v.id, child: Text(v.name))).toList(),
+                items: vendors
+                    .map((v) =>
+                        DropdownMenuItem(value: v.id, child: Text(v.name)))
+                    .toList(),
                 onChanged: (v) => setState(() => _selectedVendorId = v),
                 decoration: const InputDecoration(labelText: 'Vendor'),
                 validator: (v) => v == null ? 'Required' : null,
               ),
               const SizedBox(height: 16),
-              ...List.generate(_items.length, (index) => _buildItemFields(index)),
+              ...List.generate(
+                  _items.length, (index) => _buildItemFields(index)),
               TextButton.icon(
                 onPressed: () => setState(() => _items.add(BookingItemDraft())),
                 icon: const Icon(Icons.add),
@@ -170,10 +186,14 @@ class _BookingFormState extends State<BookingForm> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel')),
         ElevatedButton(
           onPressed: _isSubmitting ? null : _submit,
-          child: _isSubmitting ? const CircularProgressIndicator() : const Text('Create'),
+          child: _isSubmitting
+              ? const CircularProgressIndicator()
+              : const Text('Create'),
         ),
       ],
     );
@@ -192,10 +212,12 @@ class _BookingFormState extends State<BookingForm> {
                 Expanded(
                   child: TextFormField(
                     initialValue: item.capacityKva?.toString(),
-                    decoration: const InputDecoration(labelText: 'Capacity (kVA)'),
+                    decoration:
+                        const InputDecoration(labelText: 'Capacity (kVA)'),
                     keyboardType: TextInputType.number,
                     onChanged: (v) => item.capacityKva = int.tryParse(v),
-                    validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                    validator: (v) =>
+                        (v == null || v.isEmpty) ? 'Required' : null,
                   ),
                 ),
                 Column(
@@ -207,9 +229,12 @@ class _BookingFormState extends State<BookingForm> {
                           context: context,
                           initialDate: DateTime.now(),
                           firstDate: DateTime.now(),
-                          lastDate: DateTime.now().add(const Duration(days: 365)),
+                          lastDate:
+                              DateTime.now().add(const Duration(days: 365)),
                         );
-                        if (d != null) setState(() => item.date = DateFormat('yyyy-MM-dd').format(d));
+                        if (d != null)
+                          setState(() =>
+                              item.date = DateFormat('yyyy-MM-dd').format(d));
                       },
                     ),
                     if (item.date != null)
@@ -222,7 +247,8 @@ class _BookingFormState extends State<BookingForm> {
               initialValue: item.date,
               validator: (v) => item.date == null ? 'Date required' : null,
               builder: (state) => state.hasError
-                  ? Text(state.errorText!, style: const TextStyle(color: Colors.red, fontSize: 12))
+                  ? Text(state.errorText!,
+                      style: const TextStyle(color: Colors.red, fontSize: 12))
                   : const SizedBox.shrink(),
             ),
             TextFormField(
@@ -234,7 +260,8 @@ class _BookingFormState extends State<BookingForm> {
               Align(
                 alignment: Alignment.centerRight,
                 child: IconButton(
-                  icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
+                  icon: const Icon(Icons.remove_circle_outline,
+                      color: Colors.red),
                   onPressed: () => setState(() => _items.removeAt(index)),
                 ),
               ),

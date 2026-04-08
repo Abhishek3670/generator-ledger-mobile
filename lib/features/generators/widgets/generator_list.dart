@@ -66,7 +66,8 @@ class GeneratorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final canManage = context.read<PermissionService>().can('generator_management');
+    final canManage =
+        context.read<PermissionService>().can('generator_management');
     Color statusColor;
     switch (generator.inventoryType.toLowerCase()) {
       case 'permanent':
@@ -82,7 +83,8 @@ class GeneratorCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Semantics(
-        label: 'Generator: ${generator.identification}, Type: ${generator.type}, Status: ${generator.status}',
+        label:
+            'Generator: ${generator.identification}, Type: ${generator.type}, Status: ${generator.status}',
         child: ListTile(
           leading: CircleAvatar(
             backgroundColor: statusColor.withOpacity(0.1),
@@ -96,7 +98,8 @@ class GeneratorCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('${generator.type} • ${generator.status}'),
-              if (generator.inventoryType == 'permanent' && generator.rentalVendorName != null)
+              if (generator.inventoryType == 'permanent' &&
+                  generator.rentalVendorName != null)
                 Text(
                   'Assigned to: ${generator.rentalVendorName}',
                   style: const TextStyle(fontWeight: FontWeight.bold),

@@ -31,16 +31,24 @@ class _VendorFormState extends State<VendorForm> {
   void initState() {
     super.initState();
     _idController = TextEditingController(
-      text: widget.isRental ? widget.rentalVendor?.rentalVendorId : widget.vendor?.id,
+      text: widget.isRental
+          ? widget.rentalVendor?.rentalVendorId
+          : widget.vendor?.id,
     );
     _nameController = TextEditingController(
       text: widget.isRental ? widget.rentalVendor?.name : widget.vendor?.name,
     );
     _placeController = TextEditingController(
-      text: (widget.isRental ? widget.rentalVendor?.place : widget.vendor?.place) ?? '',
+      text: (widget.isRental
+              ? widget.rentalVendor?.place
+              : widget.vendor?.place) ??
+          '',
     );
     _phoneController = TextEditingController(
-      text: (widget.isRental ? widget.rentalVendor?.phone : widget.vendor?.phone) ?? '',
+      text: (widget.isRental
+              ? widget.rentalVendor?.phone
+              : widget.vendor?.phone) ??
+          '',
     );
   }
 
@@ -61,7 +69,9 @@ class _VendorFormState extends State<VendorForm> {
 
     try {
       final name = _nameController.text.trim();
-      final place = _placeController.text.trim().isEmpty ? 'Civil Line' : _placeController.text.trim();
+      final place = _placeController.text.trim().isEmpty
+          ? 'Civil Line'
+          : _placeController.text.trim();
       final phone = _phoneController.text.trim();
       final id = _idController.text.trim();
 
@@ -101,7 +111,9 @@ class _VendorFormState extends State<VendorForm> {
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
-        final error = widget.isRental ? provider.rentalVendorsError : provider.vendorsError;
+        final error = widget.isRental
+            ? provider.rentalVendorsError
+            : provider.vendorsError;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(error ?? e.toString()),
@@ -117,7 +129,9 @@ class _VendorFormState extends State<VendorForm> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.vendor != null || widget.rentalVendor != null;
-    final title = isEditing ? 'Edit ${widget.isRental ? 'Rental Partner' : 'Retailer'}' : 'Add ${widget.isRental ? 'Rental Partner' : 'Retailer'}';
+    final title = isEditing
+        ? 'Edit ${widget.isRental ? 'Rental Partner' : 'Retailer'}'
+        : 'Add ${widget.isRental ? 'Rental Partner' : 'Retailer'}';
 
     return AlertDialog(
       title: Text(title),
@@ -138,7 +152,8 @@ class _VendorFormState extends State<VendorForm> {
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Name'),
-                validator: (v) => v == null || v.trim().isEmpty ? 'Name is required' : null,
+                validator: (v) =>
+                    v == null || v.trim().isEmpty ? 'Name is required' : null,
               ),
               TextFormField(
                 controller: _placeController,
@@ -163,7 +178,12 @@ class _VendorFormState extends State<VendorForm> {
         ),
         ElevatedButton(
           onPressed: _isSubmitting ? null : _submit,
-          child: _isSubmitting ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Save'),
+          child: _isSubmitting
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2))
+              : const Text('Save'),
         ),
       ],
     );

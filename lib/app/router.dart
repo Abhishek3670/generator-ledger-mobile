@@ -14,7 +14,8 @@ import '../features/admin/admin_screen.dart';
 import 'app_scaffold.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
-final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> _shellNavigatorKey =
+    GlobalKey<NavigatorState>();
 
 class AppRouter {
   static GoRouter createRouter(AuthProvider authProvider) {
@@ -116,9 +117,12 @@ class MoreScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final permissionService = context.read<PermissionService>();
-    final canViewBilling = permissionService.can(PermissionService.billingAccess);
-    final canViewHistory = permissionService.can(PermissionService.readOnlyOperationalViews);
-    final canViewAdmin = permissionService.can(PermissionService.settingsUserAdmin);
+    final canViewBilling =
+        permissionService.can(PermissionService.billingAccess);
+    final canViewHistory =
+        permissionService.can(PermissionService.readOnlyOperationalViews);
+    final canViewAdmin =
+        permissionService.can(PermissionService.settingsUserAdmin);
 
     return Scaffold(
       appBar: AppBar(title: const Text('More')),
@@ -144,7 +148,8 @@ class MoreScreen extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.admin_panel_settings),
               title: const Text('Admin & Settings'),
-              subtitle: const Text('Manage user permissions and system settings'),
+              subtitle:
+                  const Text('Manage user permissions and system settings'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push('/admin'),
             ),

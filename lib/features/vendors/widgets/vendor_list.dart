@@ -65,7 +65,9 @@ class VendorCard extends StatelessWidget {
         title: const Text('Delete Vendor'),
         content: Text('Are you sure you want to delete ${vendor.name}?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
           TextButton(
             onPressed: () async {
               try {
@@ -77,7 +79,8 @@ class VendorCard extends StatelessWidget {
                   final provider = context.read<VendorProvider>();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(provider.vendorsError ?? 'Failed to delete vendor'),
+                      content: Text(
+                          provider.vendorsError ?? 'Failed to delete vendor'),
                       backgroundColor: Theme.of(context).colorScheme.error,
                     ),
                   );
@@ -94,7 +97,8 @@ class VendorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final canManage = context.read<PermissionService>().can('vendor_management');
+    final canManage =
+        context.read<PermissionService>().can('vendor_management');
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Semantics(

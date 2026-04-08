@@ -28,11 +28,13 @@ class GeneratorRepository {
       'notes': notes,
       'status': status,
       'inventory_type': inventoryType,
-      if (rentalVendorId != null && rentalVendorId.isNotEmpty) 'rental_vendor_id': rentalVendorId,
+      if (rentalVendorId != null && rentalVendorId.isNotEmpty)
+        'rental_vendor_id': rentalVendorId,
     });
   }
 
-  Future<void> updateGenerator(String id, {
+  Future<void> updateGenerator(
+    String id, {
     required int capacityKva,
     required String type,
     String? identification,
@@ -52,8 +54,10 @@ class GeneratorRepository {
     });
   }
 
-  Future<Map<String, dynamic>> getGeneratorBookings(String id, String date) async {
-    final response = await _apiClient.dio.get('/api/generators/$id/bookings', queryParameters: {'date': date});
+  Future<Map<String, dynamic>> getGeneratorBookings(
+      String id, String date) async {
+    final response = await _apiClient.dio
+        .get('/api/generators/$id/bookings', queryParameters: {'date': date});
     return response.data;
   }
 }

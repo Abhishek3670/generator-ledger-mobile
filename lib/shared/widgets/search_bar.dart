@@ -36,7 +36,10 @@ class DirectorySearchBar extends StatelessWidget {
         ],
         elevation: WidgetStateProperty.all(0),
         backgroundColor: WidgetStateProperty.all(
-          Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+          Theme.of(context)
+              .colorScheme
+              .surfaceContainerHighest
+              .withOpacity(0.3),
         ),
       ),
     );

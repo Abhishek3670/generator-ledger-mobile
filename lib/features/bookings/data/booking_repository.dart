@@ -32,7 +32,8 @@ class BookingRepository {
     return response.data;
   }
 
-  Future<void> addBookingItem(String bookingId, {
+  Future<void> addBookingItem(
+    String bookingId, {
     String? generatorId,
     int? capacityKva,
     required String startDt,
@@ -53,7 +54,8 @@ class BookingRepository {
     );
   }
 
-  Future<void> bulkUpdateItems(String bookingId, {
+  Future<void> bulkUpdateItems(
+    String bookingId, {
     required List<Map<String, dynamic>> updates,
     required List<int> removes,
   }) async {
@@ -81,7 +83,8 @@ class BookingRepository {
   }
 
   Future<Map<String, dynamic>> getVendorBookings(String vendorId) async {
-    final response = await _apiClient.dio.get('/api/vendors/$vendorId/bookings');
+    final response =
+        await _apiClient.dio.get('/api/vendors/$vendorId/bookings');
     return response.data;
   }
 }

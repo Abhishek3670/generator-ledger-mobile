@@ -31,9 +31,12 @@ class _GeneratorFormState extends State<GeneratorForm> {
   @override
   void initState() {
     super.initState();
-    _capacityController = TextEditingController(text: widget.generator?.capacity.toString() ?? '');
-    _identificationController = TextEditingController(text: widget.generator?.identification ?? '');
-    _notesController = TextEditingController(text: widget.generator?.notes ?? '');
+    _capacityController = TextEditingController(
+        text: widget.generator?.capacity.toString() ?? '');
+    _identificationController =
+        TextEditingController(text: widget.generator?.identification ?? '');
+    _notesController =
+        TextEditingController(text: widget.generator?.notes ?? '');
     _type = widget.generator?.type ?? 'Silent';
     _status = widget.generator?.status ?? 'Active';
     _inventoryType = widget.generator?.inventoryType ?? 'retailer';
@@ -50,9 +53,11 @@ class _GeneratorFormState extends State<GeneratorForm> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_inventoryType == 'permanent' && (_rentalVendorId == null || _rentalVendorId!.isEmpty)) {
+    if (_inventoryType == 'permanent' &&
+        (_rentalVendorId == null || _rentalVendorId!.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Rental Partner is required for Permanent Genset')),
+        const SnackBar(
+            content: Text('Rental Partner is required for Permanent Genset')),
       );
       return;
     }
@@ -74,7 +79,8 @@ class _GeneratorFormState extends State<GeneratorForm> {
           notes: notes,
           status: _status,
           inventoryType: _inventoryType,
-          rentalVendorId: _inventoryType == 'permanent' ? _rentalVendorId : null,
+          rentalVendorId:
+              _inventoryType == 'permanent' ? _rentalVendorId : null,
         );
       } else {
         await provider.createGenerator(
@@ -84,7 +90,8 @@ class _GeneratorFormState extends State<GeneratorForm> {
           notes: notes,
           status: _status,
           inventoryType: _inventoryType,
-          rentalVendorId: _inventoryType == 'permanent' ? _rentalVendorId : null,
+          rentalVendorId:
+              _inventoryType == 'permanent' ? _rentalVendorId : null,
         );
       }
       if (mounted) Navigator.pop(context);
@@ -118,7 +125,8 @@ class _GeneratorFormState extends State<GeneratorForm> {
                 decoration: const InputDecoration(labelText: 'Capacity (kVA)'),
                 keyboardType: TextInputType.number,
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Capacity is required';
+                  if (v == null || v.trim().isEmpty)
+                    return 'Capacity is required';
                   final n = int.tryParse(v);
                   if (n == null || n <= 0) return 'Must be a positive number';
                   return null;
@@ -126,36 +134,51 @@ class _GeneratorFormState extends State<GeneratorForm> {
               ),
               DropdownButtonFormField<String>(
                 value: _type,
-                items: _types.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                items: _types
+                    .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                    .toList(),
                 onChanged: (v) => setState(() => _type = v!),
                 decoration: const InputDecoration(labelText: 'Type'),
               ),
               TextFormField(
                 controller: _identificationController,
-                decoration: const InputDecoration(labelText: 'Identification / ID'),
+                decoration:
+                    const InputDecoration(labelText: 'Identification / ID'),
               ),
               DropdownButtonFormField<String>(
                 value: _status,
-                items: _statuses.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                items: _statuses
+                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                    .toList(),
                 onChanged: (v) => setState(() => _status = v!),
                 decoration: const InputDecoration(labelText: 'Status'),
               ),
               DropdownButtonFormField<String>(
                 value: _inventoryType,
-                items: _inventoryTypes.map((it) => DropdownMenuItem(value: it, child: Text(it))).toList(),
+                items: _inventoryTypes
+                    .map((it) => DropdownMenuItem(value: it, child: Text(it)))
+                    .toList(),
                 onChanged: (v) => setState(() {
                   _inventoryType = v!;
                   if (_inventoryType != 'permanent') _rentalVendorId = null;
                 }),
-                decoration: const InputDecoration(labelText: 'Inventory Category'),
+                decoration:
+                    const InputDecoration(labelText: 'Inventory Category'),
               ),
               if (_inventoryType == 'permanent')
                 DropdownButtonFormField<String>(
                   value: _rentalVendorId,
-                  items: rentalVendors.map((rv) => DropdownMenuItem(value: rv.rentalVendorId, child: Text(rv.name))).toList(),
+                  items: rentalVendors
+                      .map((rv) => DropdownMenuItem(
+                          value: rv.rentalVendorId, child: Text(rv.name)))
+                      .toList(),
                   onChanged: (v) => setState(() => _rentalVendorId = v),
-                  decoration: const InputDecoration(labelText: 'Rental Partner'),
-                  validator: (v) => _inventoryType == 'permanent' && (v == null || v.isEmpty) ? 'Rental Partner required' : null,
+                  decoration:
+                      const InputDecoration(labelText: 'Rental Partner'),
+                  validator: (v) =>
+                      _inventoryType == 'permanent' && (v == null || v.isEmpty)
+                          ? 'Rental Partner required'
+                          : null,
                 ),
               TextFormField(
                 controller: _notesController,
@@ -173,7 +196,12 @@ class _GeneratorFormState extends State<GeneratorForm> {
         ),
         ElevatedButton(
           onPressed: _isSubmitting ? null : _submit,
-          child: _isSubmitting ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Save'),
+          child: _isSubmitting
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2))
+              : const Text('Save'),
         ),
       ],
     );

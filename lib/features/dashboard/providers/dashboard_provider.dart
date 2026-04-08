@@ -39,7 +39,8 @@ class DashboardProvider extends ChangeNotifier {
 
   Future<void> fetchMonitorData() async {
     if (!_permissionService.can('monitor_access')) {
-      _monitorError = 'Access Denied: You do not have monitor_access capability.';
+      _monitorError =
+          'Access Denied: You do not have monitor_access capability.';
       notifyListeners();
       return;
     }
@@ -60,7 +61,8 @@ class DashboardProvider extends ChangeNotifier {
 
   Future<void> fetchCalendarEvents() async {
     if (!_permissionService.can('read_only_operational_views')) {
-      _calendarError = 'Access Denied: You do not have read_only_operational_views capability.';
+      _calendarError =
+          'Access Denied: You do not have read_only_operational_views capability.';
       notifyListeners();
       return;
     }
@@ -81,7 +83,8 @@ class DashboardProvider extends ChangeNotifier {
 
   Future<DayDetail?> fetchDayDetail(String date) async {
     if (!_permissionService.can('read_only_operational_views')) {
-      _dayDetailError = 'Access Denied: You do not have read_only_operational_views capability.';
+      _dayDetailError =
+          'Access Denied: You do not have read_only_operational_views capability.';
       notifyListeners();
       return null;
     }

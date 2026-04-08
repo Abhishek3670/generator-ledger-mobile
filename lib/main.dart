@@ -39,10 +39,13 @@ void main() async {
         Provider.value(value: apiClient),
         Provider.value(value: permissionService),
         ChangeNotifierProvider(create: (_) => VendorProvider(vendorRepository)),
-        ChangeNotifierProvider(create: (_) => GeneratorProvider(generatorRepository)),
-        ChangeNotifierProvider(create: (_) => BookingProvider(bookingRepository)),
         ChangeNotifierProvider(
-          create: (_) => DashboardProvider(dashboardRepository, permissionService),
+            create: (_) => GeneratorProvider(generatorRepository)),
+        ChangeNotifierProvider(
+            create: (_) => BookingProvider(bookingRepository)),
+        ChangeNotifierProvider(
+          create: (_) =>
+              DashboardProvider(dashboardRepository, permissionService),
         ),
         ChangeNotifierProvider(
           create: (_) => BillingProvider(billingRepository, permissionService),

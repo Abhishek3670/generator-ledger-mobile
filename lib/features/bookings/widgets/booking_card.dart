@@ -13,8 +13,9 @@ class BookingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('MMM dd, yyyy HH:mm');
-    final vendorName = context.watch<VendorProvider>().resolveVendorName(booking.vendorId);
-    
+    final vendorName =
+        context.watch<VendorProvider>().resolveVendorName(booking.vendorId);
+
     Color statusColor;
     switch (booking.status.toLowerCase()) {
       case 'confirmed':

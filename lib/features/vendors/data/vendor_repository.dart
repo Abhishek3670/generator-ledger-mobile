@@ -26,7 +26,8 @@ class VendorRepository {
     });
   }
 
-  Future<void> updateVendor(String id, {
+  Future<void> updateVendor(
+    String id, {
     required String name,
     String? place,
     String? phone,
@@ -55,14 +56,16 @@ class VendorRepository {
     String? phone,
   }) async {
     await _apiClient.dio.post('/api/rental-vendors', data: {
-      if (rentalVendorId != null && rentalVendorId.isNotEmpty) 'rental_vendor_id': rentalVendorId,
+      if (rentalVendorId != null && rentalVendorId.isNotEmpty)
+        'rental_vendor_id': rentalVendorId,
       'vendor_name': name,
       'vendor_place': place,
       'phone': phone,
     });
   }
 
-  Future<void> updateRentalVendor(String id, {
+  Future<void> updateRentalVendor(
+    String id, {
     required String name,
     String? place,
     String? phone,

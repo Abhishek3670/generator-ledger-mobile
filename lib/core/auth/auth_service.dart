@@ -51,9 +51,9 @@ class AuthService {
     final token = await getToken();
     final expiry = await getExpiry();
     final user = await getUser();
-    
+
     if (token == null || expiry == null || user == null) return false;
-    
+
     // Check if token is still valid
     return DateTime.now().isBefore(expiry);
   }

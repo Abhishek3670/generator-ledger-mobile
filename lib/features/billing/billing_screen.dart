@@ -53,7 +53,8 @@ class _BillingScreenState extends State<BillingScreen> {
       });
       if (_fromDate.isAfter(_toDate)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('"From" date cannot be later than "To" date.')),
+          const SnackBar(
+              content: Text('"From" date cannot be later than "To" date.')),
         );
       } else {
         _fetchData();
@@ -62,7 +63,7 @@ class _BillingScreenState extends State<BillingScreen> {
   }
 
   @override
-    Widget build(BuildContext context) {
+  Widget build(BuildContext context) {
     final provider = context.watch<BillingProvider>();
     final permissionService = context.read<PermissionService>();
     final isInvalidRange = _fromDate.isAfter(_toDate);
@@ -99,7 +100,8 @@ class _BillingScreenState extends State<BillingScreen> {
               ),
             )
           else if (provider.isLoading)
-            const Expanded(child: LoadingState(message: 'Loading billing lines...'))
+            const Expanded(
+                child: LoadingState(message: 'Loading billing lines...'))
           else if (provider.error != null)
             Expanded(
               child: ErrorState(
@@ -126,7 +128,8 @@ class _BillingScreenState extends State<BillingScreen> {
                 child: InkWell(
                   onTap: () => _selectDate(context, true),
                   child: InputDecorator(
-                    decoration: const InputDecoration(labelText: 'From', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(
+                        labelText: 'From', border: OutlineInputBorder()),
                     child: Text(_dateFormat.format(_fromDate)),
                   ),
                 ),
@@ -136,7 +139,8 @@ class _BillingScreenState extends State<BillingScreen> {
                 child: InkWell(
                   onTap: () => _selectDate(context, false),
                   child: InputDecorator(
-                    decoration: const InputDecoration(labelText: 'To', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(
+                        labelText: 'To', border: OutlineInputBorder()),
                     child: Text(_dateFormat.format(_toDate)),
                   ),
                 ),
@@ -148,26 +152,35 @@ class _BillingScreenState extends State<BillingScreen> {
             children: [
               Expanded(
                 child: DropdownButtonFormField<int>(
-                  decoration: const InputDecoration(labelText: 'Capacity (KVA)', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                      labelText: 'Capacity (KVA)',
+                      border: OutlineInputBorder()),
                   value: provider.capacityFilter,
                   items: [
-                    const DropdownMenuItem<int>(value: null, child: Text('All Capacities')),
-                    ...provider.billingData?.capacities.map((c) => DropdownMenuItem<int>(value: c, child: Text('$c KVA'))) ?? [],
+                    const DropdownMenuItem<int>(
+                        value: null, child: Text('All Capacities')),
+                    ...provider.billingData?.capacities.map((c) =>
+                            DropdownMenuItem<int>(
+                                value: c, child: Text('$c KVA'))) ??
+                        [],
                   ],
                   onChanged: (val) => provider.setCapacityFilter(val),
                 ),
               ),
               const SizedBox(width: 16),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.grey.shade400),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Column(
                   children: [
-                    const Text('Rows', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                    Text('${provider.filteredRows.length}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    const Text('Rows',
+                        style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    Text('${provider.filteredRows.length}',
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),
@@ -198,7 +211,8 @@ class _BillingScreenState extends State<BillingScreen> {
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Vendor ID: ${row.vendorId} | Booking ID: ${row.bookingId}',
+                Text(
+                    'Vendor ID: ${row.vendorId} | Booking ID: ${row.bookingId}',
                     style: const TextStyle(fontSize: 12, color: Colors.grey)),
                 const SizedBox(height: 4),
                 Text('Date: ${row.bookedDate} | Gen: ${row.generatorId}'),
@@ -206,7 +220,8 @@ class _BillingScreenState extends State<BillingScreen> {
                   children: [
                     _buildInventoryTypeBadge(row.inventoryType),
                     const SizedBox(width: 8),
-                    Text('${row.capacityKva ?? "N/A"} KVA', style: const TextStyle(fontWeight: FontWeight.w500)),
+                    Text('${row.capacityKva ?? "N/A"} KVA',
+                        style: const TextStyle(fontWeight: FontWeight.w500)),
                   ],
                 ),
               ],
@@ -242,7 +257,8 @@ class _BillingScreenState extends State<BillingScreen> {
       ),
       child: Text(
         type.toUpperCase(),
-        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+        style:
+            TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -253,7 +269,9 @@ class _BillingScreenState extends State<BillingScreen> {
       children: [
         const Icon(Icons.error_outline, color: Colors.red, size: 48),
         const SizedBox(height: 16),
-        Text(message, textAlign: TextAlign.center, style: const TextStyle(color: Colors.red)),
+        Text(message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.red)),
         const SizedBox(height: 16),
         ElevatedButton(onPressed: _fetchData, child: const Text('Retry')),
       ],

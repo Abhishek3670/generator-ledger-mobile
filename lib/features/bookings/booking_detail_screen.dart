@@ -36,24 +36,28 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         title: const Text('Cancel Booking'),
         content: TextField(
           controller: reasonController,
-          decoration: const InputDecoration(labelText: 'Reason for cancellation'),
+          decoration:
+              const InputDecoration(labelText: 'Reason for cancellation'),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Back')),
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Back')),
           TextButton(
             onPressed: () async {
               if (reasonController.text.isEmpty) return;
               try {
                 await context.read<BookingProvider>().cancelBooking(
-                  widget.bookingId,
-                  reasonController.text,
-                );
+                      widget.bookingId,
+                      reasonController.text,
+                    );
                 if (context.mounted) Navigator.pop(context);
               } catch (e) {
                 // Error handled by provider
               }
             },
-            child: const Text('Confirm Cancel', style: TextStyle(color: Colors.red)),
+            child: const Text('Confirm Cancel',
+                style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -65,13 +69,18 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Booking'),
-        content: const Text('Are you sure you want to delete this booking entirely?'),
+        content: const Text(
+            'Are you sure you want to delete this booking entirely?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
           TextButton(
             onPressed: () async {
               try {
-                await context.read<BookingProvider>().deleteBooking(widget.bookingId);
+                await context
+                    .read<BookingProvider>()
+                    .deleteBooking(widget.bookingId);
                 if (context.mounted) {
                   Navigator.pop(context); // Close dialog
                   Navigator.pop(context); // Go back to list
@@ -146,7 +155,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           if (data == null) {
             return const EmptyState(
               message: 'Booking not found',
-              subMessage: 'The requested booking may have been deleted or moved.',
+              subMessage:
+                  'The requested booking may have been deleted or moved.',
               icon: Icons.search_off,
             );
           }
@@ -186,7 +196,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             ),
             const SizedBox(height: 8),
             Text('Status: ${booking.status}'),
-            Text('Created: ${DateFormat('MMM dd, yyyy HH:mm').format(booking.createdAt)}'),
+            Text(
+                'Created: ${DateFormat('MMM dd, yyyy HH:mm').format(booking.createdAt)}'),
           ],
         ),
       ),
@@ -214,19 +225,24 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 const SizedBox(width: 8),
                 Text(
                   '${item.capacityKva} kVA',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 const Spacer(),
                 if (isEmergency)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: Colors.red.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: const Text(
                       'EMERGENCY',
-                      style: TextStyle(color: Colors.red, fontSize: 10, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          color: Colors.red,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold),
                     ),
                   ),
               ],
@@ -241,7 +257,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               const SizedBox(height: 8),
               Text(
                 'Remarks: ${item.remarks}',
-                style: const TextStyle(fontStyle: FontStyle.italic, color: Colors.grey),
+                style: const TextStyle(
+                    fontStyle: FontStyle.italic, color: Colors.grey),
               ),
             ],
           ],

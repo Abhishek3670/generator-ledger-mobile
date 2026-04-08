@@ -71,9 +71,8 @@ class BookingWithItems {
   factory BookingWithItems.fromJson(Map<String, dynamic> json) {
     return BookingWithItems(
       booking: Booking.fromJson(json['booking']),
-      items: (json['items'] as List)
-          .map((i) => BookingItem.fromJson(i))
-          .toList(),
+      items:
+          (json['items'] as List).map((i) => BookingItem.fromJson(i)).toList(),
     );
   }
 }

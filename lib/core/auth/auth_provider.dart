@@ -4,7 +4,13 @@ import 'auth_service.dart';
 import '../api/api_client.dart';
 import 'package:dio/dio.dart';
 
-enum AuthStatus { authenticated, unauthenticated, authenticating, initial, loggingOut }
+enum AuthStatus {
+  authenticated,
+  unauthenticated,
+  authenticating,
+  initial,
+  loggingOut
+}
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService;
@@ -32,7 +38,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> _restoreAuth() async {
     try {
       final isAuth = await _authService.isAuthenticated();
-      
+
       if (isAuth) {
         final user = await _authService.getUser();
         if (user != null) {
@@ -59,7 +65,7 @@ class AuthProvider extends ChangeNotifier {
 
     await _authService.saveToken(token);
     await _authService.saveUser(user);
-    
+
     final expiry = DateTime.now().add(Duration(seconds: expiresIn));
     await _authService.saveExpiry(expiry);
 
@@ -70,7 +76,8 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> logout() async {
     // Prevent recursion and multiple simultaneous logout calls
-    if (_status == AuthStatus.loggingOut || _status == AuthStatus.unauthenticated) {
+    if (_status == AuthStatus.loggingOut ||
+        _status == AuthStatus.unauthenticated) {
       return;
     }
 
@@ -79,9 +86,11 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     final token = await _authService.getToken();
-    
+
     // Call backend logout BEFORE clearing local auth so the token is still available
-    if (token != null && _apiClient != null && previousStatus == AuthStatus.authenticated) {
+    if (token != null &&
+        _apiClient != null &&
+        previousStatus == AuthStatus.authenticated) {
       try {
         // Use skipAuthHandler to prevent the global 401 interceptor from re-entering logout
         await _apiClient!.dio.post(

@@ -15,13 +15,14 @@ class GeneratorProvider extends ChangeNotifier {
 
   List<Generator> get generators {
     if (_searchQuery.isEmpty) return _generators;
-    return _generators.where((g) => 
-      g.capacity.toString().contains(_searchQuery) ||
-      g.type.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-      g.identification.toLowerCase().contains(_searchQuery.toLowerCase())
-    ).toList();
+    return _generators
+        .where((g) =>
+            g.capacity.toString().contains(_searchQuery) ||
+            g.type.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            g.identification.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .toList();
   }
-  
+
   bool get isLoading => _isLoading;
   String? get error => _error;
 
@@ -89,7 +90,8 @@ class GeneratorProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateGenerator(String id, {
+  Future<void> updateGenerator(
+    String id, {
     required int capacityKva,
     required String type,
     String? identification,

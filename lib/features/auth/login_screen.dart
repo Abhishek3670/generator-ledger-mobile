@@ -43,7 +43,8 @@ class _LoginScreenState extends State<LoginScreen> {
       await authProvider.login(token, user, expiresIn);
     } on DioException catch (e) {
       setState(() {
-        _errorMessage = e.response?.data['detail'] ?? 'Login failed. Please check your credentials.';
+        _errorMessage = e.response?.data['detail'] ??
+            'Login failed. Please check your credentials.';
       });
     } catch (e) {
       setState(() {
@@ -71,7 +72,8 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(Icons.electric_bolt, size: 64, color: Color(0xFF0F172A)),
+              const Icon(Icons.electric_bolt,
+                  size: 64, color: Color(0xFF0F172A)),
               const SizedBox(height: 16),
               Text(
                 'Genset Ledger',
@@ -85,7 +87,8 @@ class _LoginScreenState extends State<LoginScreen> {
               Text(
                 'Sign in to your account',
                 textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(color: const Color(0xFF475569)), // slate-600
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(color: const Color(0xFF475569)), // slate-600
               ),
               const SizedBox(height: 48),
               TextField(
@@ -110,7 +113,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 16),
                 Text(
                   _errorMessage!,
-                  style: TextStyle(color: theme.colorScheme.error, fontSize: 14),
+                  style:
+                      TextStyle(color: theme.colorScheme.error, fontSize: 14),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -121,7 +125,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   backgroundColor: const Color(0xFF0F172A),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
                 ),
                 child: _isLoading
                     ? const SizedBox(
@@ -132,7 +137,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text('Sign In', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    : const Text('Sign In',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ],
           ),

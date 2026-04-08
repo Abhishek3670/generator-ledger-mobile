@@ -2,7 +2,7 @@ import '../models/user.dart';
 import 'auth_provider.dart';
 
 /// Centralized permission resolver aligned to backend capability keys and default role rules.
-/// 
+///
 /// Mirroring backend logic from web_app_source/core/permissions.py.
 class PermissionService {
   final AuthProvider _authProvider;
@@ -33,7 +33,7 @@ class PermissionService {
   /// Resolves effective permissions for a user based on their role.
   static Map<String, bool> getEffectivePermissions(User user) {
     final role = user.role.toLowerCase();
-    
+
     if (role == roleAdmin) {
       return {
         settingsUserAdmin: true,
@@ -59,7 +59,7 @@ class PermissionService {
         readOnlyOperationalViews: true,
       };
     }
-    
+
     // Default: no permissions for unknown roles
     return {
       for (var key in [

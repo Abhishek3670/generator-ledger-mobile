@@ -31,7 +31,8 @@ class _BookingsListScreenState extends State<BookingsListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final canCreate = context.read<PermissionService>().can('booking_create_update');
+    final canCreate =
+        context.read<PermissionService>().can('booking_create_update');
 
     return Scaffold(
       appBar: AppBar(
@@ -61,14 +62,18 @@ class _BookingsListScreenState extends State<BookingsListScreen> {
 
                     final filtered = provider.bookings.where((b) {
                       final q = _searchQuery.toLowerCase();
-                      final vName = vendorProvider.resolveVendorName(b.vendorId).toLowerCase();
-                      return b.id.toLowerCase().contains(q) || vName.contains(q);
+                      final vName = vendorProvider
+                          .resolveVendorName(b.vendorId)
+                          .toLowerCase();
+                      return b.id.toLowerCase().contains(q) ||
+                          vName.contains(q);
                     }).toList();
 
                     if (filtered.isEmpty) {
                       return const EmptyState(
                         message: 'No bookings found',
-                        subMessage: 'Try a different search or add a new booking.',
+                        subMessage:
+                            'Try a different search or add a new booking.',
                       );
                     }
 

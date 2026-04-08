@@ -19,9 +19,11 @@ class AdminScreen extends StatelessWidget {
             children: [
               Icon(Icons.lock_outline, size: 64, color: Colors.grey),
               SizedBox(height: 16),
-              Text('Access Denied', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              Text('Access Denied',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               SizedBox(height: 8),
-              Text('You do not have permission to access admin settings.', textAlign: TextAlign.center),
+              Text('You do not have permission to access admin settings.',
+                  textAlign: TextAlign.center),
             ],
           ),
         ),
@@ -41,7 +43,10 @@ class AdminScreen extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               'System Capability Matrix',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -77,7 +82,8 @@ class AdminScreen extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'User Management Notice',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, color: Colors.blue),
                   ),
                 ),
               ],
@@ -96,15 +102,51 @@ class AdminScreen extends StatelessWidget {
 
   Widget _buildCapabilityMatrix() {
     final capabilities = [
-      {'key': PermissionService.settingsUserAdmin, 'label': 'Settings & User Admin', 'desc': 'Access to this admin panel and user management.'},
-      {'key': PermissionService.monitorAccess, 'label': 'Monitor Access', 'desc': 'View live system metrics and health status.'},
-      {'key': PermissionService.vendorManagement, 'label': 'Vendor Management', 'desc': 'Create and manage vendor records.'},
-      {'key': PermissionService.generatorManagement, 'label': 'Generator Management', 'desc': 'Manage generator inventory.'},
-      {'key': PermissionService.bookingCreateUpdate, 'label': 'Booking Write', 'desc': 'Create and update bookings.'},
-      {'key': PermissionService.bookingDelete, 'label': 'Booking Delete', 'desc': 'Ability to delete existing bookings.'},
-      {'key': PermissionService.billingAccess, 'label': 'Billing Access', 'desc': 'View billing lines and financial data.'},
-      {'key': PermissionService.exportAccess, 'label': 'Export Access', 'desc': 'Ability to export data reports.'},
-      {'key': PermissionService.readOnlyOperationalViews, 'label': 'Operational View', 'desc': 'Read-only access to operational data.'},
+      {
+        'key': PermissionService.settingsUserAdmin,
+        'label': 'Settings & User Admin',
+        'desc': 'Access to this admin panel and user management.'
+      },
+      {
+        'key': PermissionService.monitorAccess,
+        'label': 'Monitor Access',
+        'desc': 'View live system metrics and health status.'
+      },
+      {
+        'key': PermissionService.vendorManagement,
+        'label': 'Vendor Management',
+        'desc': 'Create and manage vendor records.'
+      },
+      {
+        'key': PermissionService.generatorManagement,
+        'label': 'Generator Management',
+        'desc': 'Manage generator inventory.'
+      },
+      {
+        'key': PermissionService.bookingCreateUpdate,
+        'label': 'Booking Write',
+        'desc': 'Create and update bookings.'
+      },
+      {
+        'key': PermissionService.bookingDelete,
+        'label': 'Booking Delete',
+        'desc': 'Ability to delete existing bookings.'
+      },
+      {
+        'key': PermissionService.billingAccess,
+        'label': 'Billing Access',
+        'desc': 'View billing lines and financial data.'
+      },
+      {
+        'key': PermissionService.exportAccess,
+        'label': 'Export Access',
+        'desc': 'Ability to export data reports.'
+      },
+      {
+        'key': PermissionService.readOnlyOperationalViews,
+        'label': 'Operational View',
+        'desc': 'Read-only access to operational data.'
+      },
     ];
 
     return Column(
@@ -112,21 +154,27 @@ class AdminScreen extends StatelessWidget {
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
-            title: Text(cap['label']!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            title: Text(cap['label']!,
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(cap['desc']!, style: const TextStyle(fontSize: 12)),
                 const SizedBox(height: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     cap['key']!,
-                    style: const TextStyle(fontFamily: 'monospace', fontSize: 10, color: Colors.blueGrey),
+                    style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 10,
+                        color: Colors.blueGrey),
                   ),
                 ),
               ],

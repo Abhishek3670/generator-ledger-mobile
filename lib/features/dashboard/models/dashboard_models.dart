@@ -76,7 +76,8 @@ class TemperatureStats {
   factory TemperatureStats.fromJson(Map<String, dynamic> json) {
     return TemperatureStats(
       available: json['available'],
-      celsius: json['celsius'] != null ? (json['celsius'] as num).toDouble() : null,
+      celsius:
+          json['celsius'] != null ? (json['celsius'] as num).toDouble() : null,
       sensor: json['sensor'],
       status: json['status'],
       note: json['note'],

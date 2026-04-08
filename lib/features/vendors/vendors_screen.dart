@@ -14,7 +14,8 @@ class VendorsScreen extends StatefulWidget {
   State<VendorsScreen> createState() => _VendorsScreenState();
 }
 
-class _VendorsScreenState extends State<VendorsScreen> with SingleTickerProviderStateMixin {
+class _VendorsScreenState extends State<VendorsScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
 
@@ -58,7 +59,8 @@ class _VendorsScreenState extends State<VendorsScreen> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
-    final canManageVendors = context.read<PermissionService>().can('vendor_management');
+    final canManageVendors =
+        context.read<PermissionService>().can('vendor_management');
 
     return Scaffold(
       appBar: PreferredSize(
