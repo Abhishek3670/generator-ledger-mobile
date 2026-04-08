@@ -160,10 +160,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     switch (status) {
       case 'normal':
         statusColor = Colors.green;
+        break;
       case 'high':
         statusColor = Colors.orange;
+        break;
       case 'critical':
         statusColor = Colors.red;
+        break;
       default:
         statusColor = Colors.grey;
     }
@@ -207,10 +210,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     switch (temp.status) {
       case 'normal':
         statusColor = Colors.green;
+        break;
       case 'high':
         statusColor = Colors.orange;
+        break;
       case 'critical':
         statusColor = Colors.red;
+        break;
       case 'unknown':
       default:
         statusColor = Colors.grey;

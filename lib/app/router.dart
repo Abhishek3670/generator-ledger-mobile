@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../core/auth/auth_provider.dart';
+import '../core/auth/permission_service.dart';
 import '../features/auth/login_screen.dart';
 import '../features/dashboard/dashboard_screen.dart';
+import '../features/billing/billing_screen.dart';
+import '../features/history/history_screen.dart';
 import '../features/bookings/bookings_list_screen.dart';
 import '../features/bookings/booking_detail_screen.dart';
 import '../features/directory/directory_screen.dart';
@@ -18,8 +22,6 @@ class AppRouter {
       initialLocation: '/',
       refreshListenable: authProvider,
       redirect: (context, state) {
-        // While auth is restoring, don't redirect yet.
-        // The router will show the '/' route which we gate with isInitial in the builder.
         if (authProvider.isInitial) return null;
 
         final isAuthenticated = authProvider.isAuthenticated;
@@ -38,7 +40,6 @@ class AppRouter {
         ShellRoute(
           navigatorKey: _shellNavigatorKey,
           builder: (context, state, child) {
-            // Bootstrap/Loading Gate
             if (authProvider.isInitial) {
               return const AuthBootstrapScreen();
             }
@@ -48,6 +49,14 @@ class AppRouter {
             GoRoute(
               path: '/',
               builder: (context, state) => const DashboardScreen(),
+            ),
+            GoRoute(
+              path: '/billing',
+              builder: (context, state) => const BillingScreen(),
+            ),
+            GoRoute(
+              path: '/history',
+              builder: (context, state) => const HistoryScreen(),
             ),
             GoRoute(
               path: '/bookings',
@@ -98,8 +107,43 @@ class AuthBootstrapScreen extends StatelessWidget {
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: Text('More Settings')));
+    final permissionService = context.read<PermissionService>();
+    final canViewBilling = permissionService.can(PermissionService.billingAccess);
+    final canViewHistory = permissionService.can(PermissionService.readOnlyOperationalViews);
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('More')),
+      body: ListView(
+        children: [
+          if (canViewBilling)
+            ListTile(
+              leading: const Icon(Icons.receipt_long),
+              title: const Text('Billing Lines'),
+              subtitle: const Text('View and filter billing records'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/billing'),
+            ),
+          if (canViewHistory)
+            ListTile(
+              leading: const Icon(Icons.history),
+              title: const Text('History'),
+              subtitle: const Text('View operational logs'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/history'),
+            ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text('Logout', style: TextStyle(color: Colors.red)),
+            onTap: () {
+              context.read<AuthProvider>().logout();
+            },
+          ),
+        ],
+      ),
+    );
   }
 }
