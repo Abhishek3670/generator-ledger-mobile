@@ -1,0 +1,246 @@
+{
+  "context": {
+    "phase_id": "P4",
+    "phase_name": "Dashboard and Calendar",
+    "reviewed_workspace": "W:\\Aatish\\Stuff\\gensetledgermobile\\flutter_app",
+    "completed_phases": [
+      "P1 Foundation approved",
+      "P2 Directory Modules approved",
+      "P3 Bookings Module approved"
+    ],
+    "review_summary": [
+      "Required SSH reads were executed against the live backend in this review session: web/app.py, core/services.py, core/models.py, core/permissions.py, backend tests, and backend Python file listing.",
+      "Targeted SSH reads confirmed that the live backend exposes GET /api/monitor/live, GET /api/calendar/events, and GET /api/calendar/day?date=YYYY-MM-DD.",
+      "Targeted SSH reads also confirmed there is no dedicated mobile-ready dashboard summary endpoint for active bookings / generators out / upcoming returns / pending requests in the currently verified backend routes.",
+      "Local Flutter review confirmed lib/features/dashboard/dashboard_screen.dart is still a placeholder and there is no Phase 4 repository/provider/model implementation for monitor or calendar data."
+    ],
+    "ssh_reads_performed": [
+      "ssh aatish@aatishserver 'cat /home/aatish/app/genset/web/app.py'",
+      "ssh aatish@aatishserver 'cat /home/aatish/app/genset/core/services.py'",
+      "ssh aatish@aatishserver 'cat /home/aatish/app/genset/core/models.py'",
+      "ssh aatish@aatishserver 'cat /home/aatish/app/genset/core/permissions.py'",
+      "ssh aatish@aatishserver 'find /home/aatish/app/genset/tests/ -name \"*.py\" | xargs cat'",
+      "ssh aatish@aatishserver 'find /home/aatish/app/genset -type f -name \"*.py\" | head -80'",
+      "ssh aatish@aatishserver 'grep -n \"calendar\" /home/aatish/app/genset/web/app.py'",
+      "ssh aatish@aatishserver 'grep -n \"monitor\" /home/aatish/app/genset/web/app.py'",
+      "ssh aatish@aatishserver 'sed -n \"2588,2610p\" /home/aatish/app/genset/web/app.py'",
+      "ssh aatish@aatishserver 'sed -n \"3035,3118p\" /home/aatish/app/genset/web/app.py'",
+      "ssh aatish@aatishserver 'sed -n \"1420,1478p\" /home/aatish/app/genset/web/app.py'",
+      "ssh aatish@aatishserver 'sed -n \"1534,1588p\" /home/aatish/app/genset/web/app.py'",
+      "ssh aatish@aatishserver 'grep -n \"login\" /home/aatish/app/genset/web/app.py | head -80'"
+    ]
+  },
+  "objective": "Replace the Phase 4 dashboard placeholder with a real monitor-plus-calendar implementation that matches the live backend contracts exactly, while leaving approved P1-P3 behavior untouched.",
+  "scope": {
+    "allowed_to_modify": [
+      "lib/features/dashboard/dashboard_screen.dart",
+      "lib/features/dashboard/data/dashboard_repository.dart",
+      "lib/features/dashboard/models/dashboard_models.dart",
+      "lib/features/dashboard/providers/dashboard_provider.dart",
+      "lib/main.dart",
+      "lib/app/router.dart"
+    ],
+    "allowed_to_create": [
+      "lib/features/dashboard/data/dashboard_repository.dart",
+      "lib/features/dashboard/models/dashboard_models.dart",
+      "lib/features/dashboard/providers/dashboard_provider.dart"
+    ]
+  },
+  "do_not_touch": {
+    "files": [
+      "lib/core/api/api_client.dart",
+      "lib/core/api/api_config.dart",
+      "lib/core/auth/auth_provider.dart",
+      "lib/core/auth/auth_service.dart",
+      "lib/core/auth/permission_service.dart",
+      "lib/features/bookings/data/booking_repository.dart",
+      "lib/features/bookings/models/booking.dart",
+      "lib/features/bookings/providers/booking_provider.dart",
+      "lib/features/bookings/bookings_list_screen.dart",
+      "lib/features/bookings/booking_detail_screen.dart",
+      "lib/features/bookings/widgets/booking_form.dart",
+      "lib/features/bookings/widgets/booking_item_edit_form.dart",
+      "lib/features/generators/**",
+      "lib/features/vendors/**",
+      "lib/features/directory/**"
+    ],
+    "behaviors": [
+      "Do not modify auth restoration, token storage, logout flow, or router auth gating from P1.",
+      "Do not modify permanent-generator exclusion, rental_vendor_id handling, or directory classification from P2.",
+      "Do not modify booking creation, retailer_out_of_stock handling, merge behavior, bulk update minimum-item enforcement, cancellation, or delete flows from P3.",
+      "Do not add Phase 5 billing/history features or Phase 6 admin features."
+    ]
+  },
+  "backend_truth": {
+    "permissions": {
+      "source": "/home/aatish/app/genset/core/permissions.py",
+      "capabilities": {
+        "monitor_access": "Required for GET /api/monitor/live",
+        "read_only_operational_views": "Required for GET /api/calendar/events and GET /api/calendar/day"
+      }
+    },
+    "monitor_endpoint": {
+      "route": "GET /api/monitor/live",
+      "capability": "monitor_access",
+      "source": "/home/aatish/app/genset/web/app.py lines 2588-2602 and 1433-1467",
+      "response_shape": {
+        "timestamp": "ISO8601 UTC string ending in Z",
+        "cpu": {
+          "percent": "number",
+          "status": "normal | high | critical"
+        },
+        "memory": {
+          "percent": "number",
+          "used_mb": "number",
+          "total_mb": "number",
+          "status": "normal | high | critical"
+        },
+        "temperature": {
+          "available": "boolean",
+          "celsius": "number or null",
+          "sensor": "string or null",
+          "status": "normal | high | critical | unknown",
+          "note": "string"
+        }
+      }
+    },
+    "calendar_events_endpoint": {
+      "route": "GET /api/calendar/events",
+      "capability": "read_only_operational_views",
+      "source": "/home/aatish/app/genset/web/app.py lines 3035-3057",
+      "response_shape": [
+        {
+          "title": "string, example '3 booking(s)'",
+          "start": "YYYY-MM-DD",
+          "allDay": true,
+          "extendedProps": {
+            "date": "YYYY-MM-DD"
+          }
+        }
+      ],
+      "notes": [
+        "This endpoint is aggregated by date only.",
+        "It does not include booking_id, generator_id, or vendor_id.",
+        "A calendar tap must therefore drill into day detail by date, not directly to booking detail from the event payload."
+      ]
+    },
+    "calendar_day_endpoint": {
+      "route": "GET /api/calendar/day",
+      "query_parameters": {
+        "date": "required, format YYYY-MM-DD"
+      },
+      "capability": "read_only_operational_views",
+      "source": "/home/aatish/app/genset/web/app.py lines 3060-3117",
+      "response_shape": {
+        "date": "YYYY-MM-DD",
+        "vendors": [
+          {
+            "vendor_id": "string",
+            "vendor_name": "string",
+            "bookings": [
+              {
+                "booking_id": "string",
+                "items": [
+                  {
+                    "generator_id": "string",
+                    "capacity_kva": "integer or null",
+                    "start_dt": "datetime string",
+                    "end_dt": "datetime string",
+                    "remarks": "string"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "error_contract": {
+        "400": {
+          "detail": "Invalid date format (YYYY-MM-DD)"
+        }
+      }
+    },
+    "auth_payload": {
+      "route": "POST /api/login",
+      "source": "/home/aatish/app/genset/web/app.py lines 1534-1588",
+      "response_shape": {
+        "access_token": "string",
+        "token_type": "bearer",
+        "expires_in": "integer seconds",
+        "user": {
+          "id": "integer",
+          "username": "string",
+          "role": "string"
+        }
+      }
+    },
+    "phase_scope_correction": [
+      "Do not invent a dashboard summary endpoint for active bookings / generators out / upcoming returns / pending requests because that route was not verified in this review session.",
+      "Phase 4 should implement a monitor-backed dashboard section plus a calendar/date drill-down flow from the verified endpoints above."
+    ]
+  },
+  "required_fixes": [
+    {
+      "finding_id": "P4-C6-001",
+      "file": "lib/features/dashboard/dashboard_screen.dart:10",
+      "what_is_wrong": "The screen is a placeholder (`Dashboard Placeholder`) and implements none of the verified Phase 4 backend contracts.",
+      "correct_behavior": "Replace the placeholder with a real dashboard screen that loads live monitor data from GET /api/monitor/live and live calendar aggregates from GET /api/calendar/events."
+    },
+    {
+      "finding_id": "P4-C6-002",
+      "file": "lib/app/router.dart:50",
+      "what_is_wrong": "The dashboard route renders only the placeholder screen; there is no Phase 4 drill-down flow for selected calendar dates.",
+      "correct_behavior": "Keep `/` routed to the dashboard, but add the internal dashboard flow needed to select a calendar date, fetch GET /api/calendar/day?date=YYYY-MM-DD, and then navigate to the already-approved booking detail route `/bookings/:id` from the returned day data."
+    },
+    {
+      "finding_id": "P4-C2-003",
+      "file": "lib/",
+      "what_is_wrong": "There is no Flutter code calling the verified Phase 4 routes GET /api/monitor/live, GET /api/calendar/events, or GET /api/calendar/day.",
+      "correct_behavior": "Add a dashboard repository/provider/model layer that calls exactly those paths with the verified methods and query parameter name `date`."
+    },
+    {
+      "finding_id": "P4-C3-004",
+      "file": "lib/",
+      "what_is_wrong": "There are no Dart DTOs for the verified monitor and calendar payload shapes, which invites field-name drift and guessed parsing.",
+      "correct_behavior": "Create Dart models whose JSON keys match the backend exactly: `timestamp`, `cpu.percent`, `cpu.status`, `memory.percent`, `memory.used_mb`, `memory.total_mb`, `memory.status`, `temperature.available`, `temperature.celsius`, `temperature.sensor`, `temperature.status`, `temperature.note`, `title`, `start`, `allDay`, `extendedProps.date`, `vendors`, `vendor_id`, `vendor_name`, `booking_id`, `generator_id`, `capacity_kva`, `start_dt`, `end_dt`, `remarks`."
+    },
+    {
+      "finding_id": "P4-C9-005",
+      "file": "lib/features/dashboard/dashboard_screen.dart",
+      "what_is_wrong": "The current implementation cannot match live web behavior because it has no calendar date drill-down, no day detail surface, no booking navigation, no refresh, and no empty/error states.",
+      "correct_behavior": "Implement pull-to-refresh, last-updated display using monitor `timestamp`, a visible empty state when there are no calendar events, a date-detail surface from `/api/calendar/day`, and tap navigation from a returned `booking_id` to the existing booking detail screen."
+    }
+  ],
+  "optional_improvements": [
+    "If the UI needs a compact calendar visualization, use a simple monthly grid or date list that stays entirely driven by `/api/calendar/events` and `/api/calendar/day` without inventing unsupported filters.",
+    "If monitor access is denied by backend permissions, show a clear gated state for the monitor panel while still allowing calendar data for users who have `read_only_operational_views`."
+  ],
+  "acceptance_criteria": [
+    "The dashboard screen no longer contains placeholder text or mocked data.",
+    "The app calls GET /api/monitor/live and renders `cpu`, `memory`, and `temperature` using the exact backend field names.",
+    "The app calls GET /api/calendar/events and renders date-level calendar entries based on the returned `start` dates.",
+    "Selecting a calendar date triggers GET /api/calendar/day` with query parameter `date` in `YYYY-MM-DD` format.",
+    "The day-detail UI renders vendors -> bookings -> items using the exact backend keys from `/api/calendar/day`.",
+    "A user can tap a returned `booking_id` from day detail and reach the existing booking detail route `/bookings/:id`.",
+    "Pull-to-refresh performs fresh network requests for the dashboard data and updates the visible state.",
+    "Empty, loading, and error states exist for both monitor and calendar data.",
+    "No files outside the allowed scope are modified."
+  ],
+  "output_contract": {
+    "must_modify_or_create": [
+      "lib/features/dashboard/dashboard_screen.dart",
+      "lib/features/dashboard/data/dashboard_repository.dart",
+      "lib/features/dashboard/models/dashboard_models.dart",
+      "lib/features/dashboard/providers/dashboard_provider.dart",
+      "lib/main.dart"
+    ],
+    "may_modify_if_needed": [
+      "lib/app/router.dart"
+    ],
+    "must_not_produce": [
+      "Phase 5 billing/history files",
+      "Phase 6 admin files",
+      "Prompt or analysis artifacts inside committed source"
+    ]
+  }
+}

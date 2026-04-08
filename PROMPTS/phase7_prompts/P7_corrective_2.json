@@ -1,0 +1,85 @@
+{
+  "context": {
+    "phase_id": "P7",
+    "phase_name": "Hardening",
+    "workspace": "W:/Aatish/Stuff/gensetledgermobile/flutter_app",
+    "reviewed_output": "Gemini Phase 7 corrective 1 output",
+    "prior_corrective": "PROMPTS/P7_corrective_1.json",
+    "backend_context": [
+      "No SSH read is required for this corrective. This is a local static-validation fix only.",
+      "Do not change API endpoint paths, DTO keys, permission capability names, providers, repositories, or business rules."
+    ],
+    "resolved_findings": [
+      "P7-C1-001 resolved in working tree: shared state widgets no longer pass padding to Center.",
+      "P7-C1-002 resolved in working tree: billing imports and shared widget relative path restored.",
+      "P7-C1-003 resolved in working tree: bookings list imports restored.",
+      "P7-C1-004 resolved in working tree: generator list material/provider imports restored.",
+      "P7-C1-005 resolved in working tree: vendor list material/provider imports restored.",
+      "P7-C1-006 resolved in working tree: rental vendor list material/provider imports restored.",
+      "P7-C1-007 resolved in working tree: unused login_screen state_widgets import removed."
+    ],
+    "remaining_validation_failure": "git diff --check still fails on lib/features/dashboard/dashboard_screen.dart trailing whitespace."
+  },
+  "objective": "Remove the remaining trailing whitespace in dashboard_screen.dart without changing behavior.",
+  "scope": {
+    "allowed_to_modify": [
+      "lib/features/dashboard/dashboard_screen.dart"
+    ],
+    "do_not_modify": [
+      "PROMPTS/**",
+      "PROMPTS/SESSION/**",
+      ".vscode/**",
+      "devtools_options.yaml",
+      "gemini_*prompt.json",
+      "backend files",
+      "API repositories",
+      "model DTO files",
+      "provider business logic files",
+      "any file other than lib/features/dashboard/dashboard_screen.dart"
+    ]
+  },
+  "do_not_touch": {
+    "behaviors": [
+      "Do not alter dashboard monitor or calendar logic.",
+      "Do not alter endpoint paths.",
+      "Do not alter permission gating.",
+      "Do not reformat unrelated files.",
+      "Do not stage files or commit changes."
+    ]
+  },
+  "backend_truth": {
+    "phase_scope": "No backend contract changes are in scope.",
+    "preserved_contracts": [
+      "GET /api/monitor/live",
+      "GET /api/calendar/events",
+      "GET /api/calendar/day",
+      "monitor_access",
+      "read_only_operational_views"
+    ]
+  },
+  "required_fixes": [
+    {
+      "finding_id": "P7-C1-008",
+      "file": "lib/features/dashboard/dashboard_screen.dart",
+      "what_is_wrong": "git diff --check reports trailing whitespace on line 232 after `final tempText = temp.available ` and line 235 after `final subText = temp.available `.",
+      "correct_behavior": "Remove the trailing spaces after `temp.available` on both lines. Do not change any logic, strings, or surrounding code."
+    }
+  ],
+  "optional_improvements": [],
+  "acceptance_criteria": [
+    "1. git diff --check passes.",
+    "2. No files other than lib/features/dashboard/dashboard_screen.dart are modified by this corrective.",
+    "3. Dashboard behavior and text remain unchanged.",
+    "4. flutter analyze --no-pub is run if available; report exact result or exact timeout.",
+    "5. No files are staged or committed."
+  ],
+  "output_contract": {
+    "must_modify": [
+      "lib/features/dashboard/dashboard_screen.dart"
+    ],
+    "must_report": [
+      "Exact validation command output for git diff --check",
+      "Whether flutter analyze --no-pub ran, failed, or timed out"
+    ]
+  }
+}

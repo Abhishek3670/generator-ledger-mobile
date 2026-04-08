@@ -1,0 +1,161 @@
+{
+  "context": {
+    "phase_id": "P7",
+    "phase_name": "Hardening",
+    "workspace": "W:/Aatish/Stuff/gensetledgermobile/flutter_app",
+    "prior_phase_status": [
+      "P1 Foundation approved and committed",
+      "P2 Directory Modules approved and committed",
+      "P3 Bookings Module approved and committed",
+      "P4 Dashboard and Calendar approved and committed",
+      "P5 Billing and History approved and committed",
+      "P6 Admin Module approved and committed as 61a6252"
+    ],
+    "backend_reads_performed": [
+      "No new P7 backend reads are required at phase start because P7 is a hardening phase with no new feature contracts.",
+      "Use the cached P6 backend context at PROMPTS/SESSION/session_context.json for the most recent verified permission/admin facts.",
+      "If a hardening fix touches a backend contract, endpoint, DTO, permission, or business rule, stop and request a targeted SSH read before changing that behavior."
+    ],
+    "known_validation_context": [
+      "Previous Codex review attempts saw flutter analyze --no-pub time out after 180 seconds in this environment. Do not ignore analyzer failures; run validation locally and report exact output or exact timeout/failure.",
+      "Current uncommitted non-implementation artifacts may include PROMPTS/, .vscode/, devtools_options.yaml, and deleted gemini_*prompt.json files. Do not modify or commit them as part of implementation."
+    ]
+  },
+  "objective": "Perform a production-readiness hardening pass across the completed Flutter app without adding new backend features or changing approved business rules.",
+  "scope": {
+    "allowed_to_modify": [
+      "lib/**",
+      "test/**",
+      "analysis_options.yaml",
+      "pubspec.yaml",
+      "pubspec.lock"
+    ],
+    "conditional_only": [
+      "android/** only if required to fix a verified Android release build failure",
+      "ios/** only if working on macOS and required to fix a verified iOS build failure"
+    ],
+    "not_allowed": [
+      "PROMPTS/**",
+      ".vscode/**",
+      "devtools_options.yaml",
+      "gemini_*prompt.json",
+      "backend files",
+      "generated build outputs"
+    ]
+  },
+  "do_not_touch": {
+    "behaviors": [
+      "Do not alter P1 auth restoration, bearer token attachment, logout semantics, or router auth gating except to add safe global 403/error handling that preserves existing 401 logout behavior.",
+      "Do not alter P2 generator inventory classification or permanent-generator exclusion from booking flows.",
+      "Do not alter P3 booking rules: retailer-first assignment, emergency fallback only with explicit user confirmation, merge confirmation, cancellation, and bulk update minimum-one-item enforcement.",
+      "Do not alter P4 dashboard/calendar endpoint paths or permission gating.",
+      "Do not alter P5 billing endpoint paths, billing field mapping, or backend-limited history behavior.",
+      "Do not alter P6 admin backend-limited behavior: no invented JSON admin endpoints, no HTML scraping, no WebView admin wrapper, and no role-label UI gating.",
+      "Do not add new backend API assumptions. P7 is hardening, not feature expansion."
+    ],
+    "contracts": [
+      "Keep all API paths exactly as previously approved unless a targeted SSH read proves a backend change.",
+      "Keep all DTO JSON keys exactly as previously approved unless a targeted SSH read proves a backend change.",
+      "Keep all permission checks based on named PermissionService capability constants."
+    ]
+  },
+  "backend_truth": {
+    "phase_scope": "No new backend functionality is in scope for P7.",
+    "preserved_capabilities": [
+      "settings_user_admin",
+      "monitor_access",
+      "vendor_management",
+      "generator_management",
+      "booking_create_update",
+      "booking_delete",
+      "billing_access",
+      "export_access",
+      "read_only_operational_views"
+    ],
+    "known_global_network_behavior": [
+      "ApiClient currently attaches Bearer tokens on authenticated requests.",
+      "ApiClient currently handles 401 globally by calling AuthProvider.logout unless requestOptions.extra.skipAuthHandler is true.",
+      "P7 should add or centralize user-facing 403 handling only if it can be done without breaking existing provider-level permission messages."
+    ],
+    "hardening_policy": "When a fix requires backend-specific facts not already present in approved code or cached session context, stop and ask Codex for a targeted SSH verification before implementing that fix."
+  },
+  "required_fixes": [
+    {
+      "finding_id": "P7-001",
+      "requirement": "Audit every app screen and widget for loading, empty, error, and permission-denied states.",
+      "targets": [
+        "auth/login",
+        "dashboard/calendar",
+        "bookings list/detail/create/edit",
+        "directory/vendors/rental vendors/generators",
+        "billing/history",
+        "admin/more"
+      ],
+      "correct_behavior": "No screen may fail as a blank page or spinner-only dead end. Empty states must explain what is missing. Error states must offer retry or recovery where appropriate."
+    },
+    {
+      "finding_id": "P7-002",
+      "requirement": "Harden network error handling for timeouts, offline/network failures, 401, 403, 404, and 5xx responses.",
+      "correct_behavior": "401 remains globally handled through graceful logout/re-login. 403 must be user-facing and must not look like empty data. 404 and 5xx must show actionable messages. Avoid duplicating inconsistent per-screen error parsers if a shared helper is safer."
+    },
+    {
+      "finding_id": "P7-003",
+      "requirement": "Verify and improve accessibility.",
+      "correct_behavior": "Interactive controls should have semantic labels where icons/text are insufficient, tap targets should be at least 48x48dp, forms should have clear labels and validation messages, and loading/error/empty states should be screen-reader understandable."
+    },
+    {
+      "finding_id": "P7-004",
+      "requirement": "Verify large-list behavior and pagination/lazy rendering.",
+      "correct_behavior": "Lists that can grow large should use lazy builders. Do not invent backend pagination if no endpoint support exists; if backend pagination is absent, document that limitation and avoid fake client-side pagination that hides data."
+    },
+    {
+      "finding_id": "P7-005",
+      "requirement": "Remove or resolve production TODO/FIXME/placeholder code paths.",
+      "correct_behavior": "There must be no TODO, FIXME, placeholder scaffolds, mock data, fake endpoints, or debug-only behavior in production code paths."
+    },
+    {
+      "finding_id": "P7-006",
+      "requirement": "Add or repair tests where low-risk and useful.",
+      "correct_behavior": "At minimum, keep the existing bootstrap smoke test passing. Add focused widget/unit tests for shared error/access states only if they do not require backend or fragile timing."
+    },
+    {
+      "finding_id": "P7-007",
+      "requirement": "Run production validation commands and report exact results.",
+      "correct_behavior": "Run flutter analyze, flutter test, and an Android release build. If iOS build is not available in the current environment, say so explicitly. If a command times out, report the command and timeout."
+    }
+  ],
+  "optional_improvements": [
+    "Introduce small shared UI components for loading, empty, error, and access-denied states if this reduces duplication without risky refactors.",
+    "Introduce a small shared API error formatter if it reduces inconsistent DioException handling without changing approved business behavior.",
+    "Improve visual consistency of hardening states while preserving the existing app design language."
+  ],
+  "acceptance_criteria": [
+    "1. All production screens have explicit loading, empty, error, and permission-denied states where applicable.",
+    "2. 401 behavior remains globally handled and does not recurse during logout.",
+    "3. 403 errors are user-facing and are not silently converted into empty states.",
+    "4. No hardcoded mock data, invented endpoints, HTML scraping, or WebView admin management is introduced.",
+    "5. No approved P1-P6 backend route, DTO key, permission capability, or booking business rule is changed without targeted SSH verification.",
+    "6. No TODO/FIXME/placeholder production code paths remain.",
+    "7. Tap targets and semantic labels are acceptable for core navigation, icon-only controls, forms, and action buttons.",
+    "8. flutter analyze result is reported exactly.",
+    "9. flutter test result is reported exactly.",
+    "10. Android release build result is reported exactly; iOS release build is attempted only on a supported macOS environment and otherwise documented as not run.",
+    "11. Output includes a concise file-by-file summary of changes and any accepted limitations."
+  ],
+  "output_contract": {
+    "must_report": [
+      "Exact files modified",
+      "Validation commands run with exact results",
+      "Any commands skipped and why",
+      "Any limitations intentionally left for operator acceptance"
+    ],
+    "must_not_modify": [
+      "PROMPTS/**",
+      "PROMPTS/SESSION/**",
+      ".vscode/**",
+      "devtools_options.yaml",
+      "gemini_*prompt.json"
+    ],
+    "commit_boundary_note": "Do not stage or commit anything. Codex will review and declare the commit boundary after P7 is approved."
+  }
+}

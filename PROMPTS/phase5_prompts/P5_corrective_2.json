@@ -1,0 +1,153 @@
+{
+  "context": {
+    "phase_id": "P5",
+    "phase_name": "Billing and History corrective review",
+    "workspace": "W:/Aatish/Stuff/gensetledgermobile/flutter_app",
+    "reviewed_output": [
+      "lib/features/billing/billing_screen.dart",
+      "lib/features/billing/data/billing_repository.dart",
+      "lib/features/billing/models/billing_models.dart",
+      "lib/features/billing/providers/billing_provider.dart",
+      "lib/features/history/history_screen.dart",
+      "lib/app/router.dart",
+      "lib/main.dart"
+    ],
+    "corrective_status": [
+      "P5-CORR-001 resolved: billing rows now show vendor_id and booking_id.",
+      "P5-CORR-002 resolved at behavior level: invalid date ranges no longer submit refresh requests and show an invalid-range state.",
+      "P5-CORR-003 resolved: History entry and direct screen are gated by read_only_operational_views."
+    ],
+    "backend_reads_performed_this_review": [
+      "ssh aatish@aatishserver 'cat /home/aatish/app/genset/web/app.py'",
+      "ssh aatish@aatishserver 'cat /home/aatish/app/genset/core/services.py'",
+      "ssh aatish@aatishserver 'cat /home/aatish/app/genset/core/models.py'",
+      "ssh aatish@aatishserver 'cat /home/aatish/app/genset/core/permissions.py'",
+      "ssh aatish@aatishserver 'find /home/aatish/app/genset/tests/ -name \"*.py\" | xargs cat'",
+      "ssh aatish@aatishserver 'find /home/aatish/app/genset -type f -name \"*.py\" | head -80'",
+      "ssh aatish@aatishserver \"sed -n '1780,1815p' /home/aatish/app/genset/web/app.py\"",
+      "ssh aatish@aatishserver \"sed -n '2035,2175p' /home/aatish/app/genset/web/app.py\"",
+      "ssh aatish@aatishserver \"sed -n '2970,3045p' /home/aatish/app/genset/web/app.py\"",
+      "ssh aatish@aatishserver \"sed -n '600,675p' /home/aatish/app/genset/core/repositories.py\"",
+      "ssh aatish@aatishserver \"sed -n '825,900p' /home/aatish/app/genset/core/repositories.py\""
+    ],
+    "backend_confirmation": [
+      "GET /api/billing/lines is the only verified JSON billing API.",
+      "GET /api/billing/lines requires billing_access.",
+      "GET /api/billing/lines requires query parameters named exactly from and to, both formatted YYYY-MM-DD.",
+      "GET /api/billing/lines returns from, to, rows, capacities, and count.",
+      "Each billing row contains vendor_id, vendor_name, booking_id, booked_date, generator_id, capacity_kva, and inventory_type.",
+      "GET /history exists only as an HTML page and requires read_only_operational_views.",
+      "No JSON /api/history endpoint was verified.",
+      "No invoice, payment, or receipt API/model was verified."
+    ],
+    "static_check_context": [
+      "flutter analyze --no-pub lib/features/billing/billing_screen.dart lib/features/history/history_screen.dart lib/app/router.dart lib/main.dart timed out locally after 180 seconds.",
+      "Text inspection found non-empty Dart switch cases without break/return/continue in lib/features/billing/billing_screen.dart.",
+      "Text inspection also found the same compile-safety pattern in previously approved lib/features/dashboard/dashboard_screen.dart.",
+      "Existing lib/features/generators/widgets/generator_list.dart shows the correct local pattern with break statements."
+    ]
+  },
+  "objective": "Fix the remaining compile-safety blocker by terminating all non-empty Dart switch cases touched by the billing/dashboard UI color mapping.",
+  "scope": {
+    "allowed_to_modify": [
+      "lib/features/billing/billing_screen.dart",
+      "lib/features/dashboard/dashboard_screen.dart"
+    ],
+    "allowed_to_create": []
+  },
+  "do_not_touch": {
+    "files": [
+      "lib/core/**",
+      "lib/app/router.dart",
+      "lib/app/app_scaffold.dart",
+      "lib/main.dart",
+      "lib/features/billing/data/billing_repository.dart",
+      "lib/features/billing/models/billing_models.dart",
+      "lib/features/billing/providers/billing_provider.dart",
+      "lib/features/history/history_screen.dart",
+      "lib/features/bookings/**",
+      "lib/features/generators/**",
+      "lib/features/vendors/**",
+      "lib/features/directory/**"
+    ],
+    "behaviors": [
+      "Do not change any API route, query parameter, DTO key, permission flag, or provider wiring.",
+      "Do not change dashboard/calendar API calls, data loading, permission gating, or navigation.",
+      "Do not change billing/history API behavior, permission gating, or navigation.",
+      "Do not add invoice, payment, receipt, or fake history data.",
+      "Do not refactor unrelated code."
+    ]
+  },
+  "backend_truth": {
+    "billing_api": {
+      "route": "GET /api/billing/lines",
+      "guard": "billing_access",
+      "query_parameters": {
+        "from": "required YYYY-MM-DD string",
+        "to": "required YYYY-MM-DD string"
+      },
+      "response_row_fields": [
+        "vendor_id",
+        "vendor_name",
+        "booking_id",
+        "booked_date",
+        "generator_id",
+        "capacity_kva",
+        "inventory_type"
+      ]
+    },
+    "history_page": {
+      "route": "GET /history",
+      "guard": "read_only_operational_views",
+      "json_api_status": "No JSON /api/history endpoint was verified."
+    },
+    "dashboard_phase_guard": {
+      "reason_for_touching_dashboard": "Compile-safety only. The dashboard file has Dart switch fallthrough in color mapping helpers and must be repaired without changing behavior."
+    }
+  },
+  "required_fixes": [
+    {
+      "finding_id": "P5-CORR-004",
+      "check_id": "C1",
+      "file": "lib/features/billing/billing_screen.dart",
+      "problem": "_buildInventoryTypeBadge has non-empty switch cases for retailer, permanent, and emergency that assign color but do not terminate with break/return/continue.",
+      "correct_behavior": "Add break statements after each non-default color assignment, or rewrite the helper as an expression that returns a color without switch fallthrough."
+    },
+    {
+      "finding_id": "P5-CORR-005",
+      "check_id": "C1/C7",
+      "file": "lib/features/dashboard/dashboard_screen.dart",
+      "problem": "_buildMonitorCard and _buildTemperatureCard have non-empty switch cases that assign statusColor but do not terminate with break/return/continue.",
+      "correct_behavior": "Apply the same compile-safety fix only to the statusColor switch mappings. Preserve the exact normal/high/critical/unknown color mapping and all dashboard/calendar behavior."
+    }
+  ],
+  "optional_improvements": [],
+  "acceptance_criteria": [
+    "Every non-empty switch case in lib/features/billing/billing_screen.dart terminates with break, return, throw, continue, or is replaced by an equivalent non-fallthrough expression.",
+    "Every non-empty switch case in lib/features/dashboard/dashboard_screen.dart terminates with break, return, throw, continue, or is replaced by an equivalent non-fallthrough expression.",
+    "The billing inventory color mapping remains: retailer blue, permanent green, emergency orange, default grey.",
+    "The dashboard monitor color mapping remains: normal green, high orange, critical red, default grey.",
+    "The dashboard temperature color mapping remains: normal green, high orange, critical red, unknown/default grey.",
+    "No API routes, DTOs, permission checks, providers, or navigation are changed.",
+    "No P1/P2/P3 booking, auth, generator, vendor, or directory behavior is changed."
+  ],
+  "output_contract": {
+    "must_modify": [
+      "lib/features/billing/billing_screen.dart",
+      "lib/features/dashboard/dashboard_screen.dart"
+    ],
+    "must_not_modify": [
+      "lib/core/**",
+      "lib/app/**",
+      "lib/main.dart",
+      "lib/features/billing/data/**",
+      "lib/features/billing/models/**",
+      "lib/features/billing/providers/**",
+      "lib/features/history/**",
+      "lib/features/bookings/**",
+      "lib/features/generators/**",
+      "lib/features/vendors/**",
+      "lib/features/directory/**"
+    ]
+  }
+}
