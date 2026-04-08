@@ -10,6 +10,7 @@ import '../features/history/history_screen.dart';
 import '../features/bookings/bookings_list_screen.dart';
 import '../features/bookings/booking_detail_screen.dart';
 import '../features/directory/directory_screen.dart';
+import '../features/admin/admin_screen.dart';
 import 'app_scaffold.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -78,6 +79,10 @@ class AppRouter {
               path: '/more',
               builder: (context, state) => const MoreScreen(),
             ),
+            GoRoute(
+              path: '/admin',
+              builder: (context, state) => const AdminScreen(),
+            ),
           ],
         ),
       ],
@@ -113,6 +118,7 @@ class MoreScreen extends StatelessWidget {
     final permissionService = context.read<PermissionService>();
     final canViewBilling = permissionService.can(PermissionService.billingAccess);
     final canViewHistory = permissionService.can(PermissionService.readOnlyOperationalViews);
+    final canViewAdmin = permissionService.can(PermissionService.settingsUserAdmin);
 
     return Scaffold(
       appBar: AppBar(title: const Text('More')),
@@ -133,6 +139,14 @@ class MoreScreen extends StatelessWidget {
               subtitle: const Text('View operational logs'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push('/history'),
+            ),
+          if (canViewAdmin)
+            ListTile(
+              leading: const Icon(Icons.admin_panel_settings),
+              title: const Text('Admin & Settings'),
+              subtitle: const Text('Manage user permissions and system settings'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/admin'),
             ),
           const Divider(),
           ListTile(

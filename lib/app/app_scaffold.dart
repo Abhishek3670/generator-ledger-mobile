@@ -28,7 +28,10 @@ class AppScaffold extends StatelessWidget {
     final String location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/bookings')) return 1;
     if (location.startsWith('/directory')) return 2;
-    if (location.startsWith('/more')) return 3;
+    if (location.startsWith('/more') ||
+        location.startsWith('/admin') ||
+        location.startsWith('/billing') ||
+        location.startsWith('/history')) return 3;
     return 0;
   }
 
