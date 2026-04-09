@@ -7,6 +7,8 @@ import '../../shared/widgets/search_bar.dart';
 import 'widgets/booking_card.dart';
 import 'widgets/booking_form.dart';
 import '../../shared/widgets/state_widgets.dart';
+import '../../widgets/shared/corporate_app_bar.dart';
+import 'models/booking.dart';
 
 class BookingsListScreen extends StatefulWidget {
   const BookingsListScreen({super.key});
@@ -35,8 +37,8 @@ class _BookingsListScreenState extends State<BookingsListScreen> {
         context.read<PermissionService>().can('booking_create_update');
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Bookings'),
+      appBar: const CorporateAppBar(
+        title: 'Bookings',
       ),
       body: Consumer<VendorProvider>(
         builder: (context, vendorProvider, child) {
@@ -77,16 +79,43 @@ class _BookingsListScreenState extends State<BookingsListScreen> {
                       );
                     }
 
+                    // Group bookings by Vendor Name
+                    final Map<String, List<Booking>> groupedBookings = {};
+                    for (var booking in filtered) {
+                      final vName = vendorProvider.resolveVendorName(booking.vendorId);
+                      if (!groupedBookings.containsKey(vName)) {
+                        groupedBookings[vName] = [];
+                      }
+                      groupedBookings[vName]!.add(booking);
+                    }
+
+                    final vendorNames = groupedBookings.keys.toList()..sort();
+
                     return RefreshIndicator(
                       onRefresh: () async {
                         await provider.fetchBookings();
                         await vendorProvider.ensureVendorsLoaded();
                       },
                       child: ListView.builder(
-                        itemCount: filtered.length,
+                        itemCount: vendorNames.length,
                         itemBuilder: (context, index) {
-                          final booking = filtered[index];
-                          return BookingCard(booking: booking);
+                          final vendorName = vendorNames[index];
+                          final vendorBookings = groupedBookings[vendorName]!;
+
+                          return ExpansionTile(
+                            initiallyExpanded: true,
+                            title: Text(
+                              vendorName,
+                              style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                            ),
+                            subtitle: Text(
+                              '${vendorBookings.length} Active Booking${vendorBookings.length == 1 ? '' : 's'}',
+                              style: const TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                            children: vendorBookings.map((booking) {
+                              return BookingCard(booking: booking);
+                            }).toList(),
+                          );
                         },
                       ),
                     );
