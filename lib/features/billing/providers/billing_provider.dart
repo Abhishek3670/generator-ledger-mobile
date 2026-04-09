@@ -34,6 +34,52 @@ class BillingProvider extends ChangeNotifier {
         .toList();
   }
 
+  final Map<int, double> _rates = {};
+  Map<int, double> get rates => _rates;
+
+  final Set<String> _paidBookings = {};
+
+  void setRate(int capacity, double rate) {
+    _rates[capacity] = rate;
+    notifyListeners();
+  }
+
+  void togglePaymentStatus(String bookingId) {
+    if (_paidBookings.contains(bookingId)) {
+      _paidBookings.remove(bookingId);
+    } else {
+      _paidBookings.add(bookingId);
+    }
+    notifyListeners();
+  }
+
+  bool isPaid(String bookingId) => _paidBookings.contains(bookingId);
+
+  double getAmountForCapacity(int? capacity) {
+    if (capacity == null) return 0.0;
+    return _rates[capacity] ?? 0.0;
+  }
+
+  double get totalRevenue {
+    double total = 0;
+    for (var row in filteredRows) {
+      if (isPaid(row.bookingId)) {
+        total += getAmountForCapacity(row.capacityKva);
+      }
+    }
+    return total;
+  }
+
+  double get totalPending {
+    double total = 0;
+    for (var row in filteredRows) {
+      if (!isPaid(row.bookingId)) {
+        total += getAmountForCapacity(row.capacityKva);
+      }
+    }
+    return total;
+  }
+
   Future<void> fetchBillingLines({
     required String from,
     required String to,
@@ -50,6 +96,12 @@ class BillingProvider extends ChangeNotifier {
 
     try {
       _billingData = await _repository.getBillingLines(from: from, to: to);
+      // Auto-populate default rates to 0 if not present
+      if (_billingData != null) {
+        for (var capacity in _billingData!.capacities) {
+          _rates.putIfAbsent(capacity, () => 0.0);
+        }
+      }
     } catch (e) {
       _error = e.toString().replaceFirst('Exception: ', '');
     } finally {

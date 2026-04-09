@@ -17,6 +17,7 @@ class _BillingScreenState extends State<BillingScreen> {
   DateTime _fromDate = DateTime.now().subtract(const Duration(days: 30));
   DateTime _toDate = DateTime.now();
   final DateFormat _dateFormat = DateFormat('yyyy-MM-dd');
+  final NumberFormat _currencyFormat = NumberFormat.currency(symbol: '\$');
 
   @override
   void initState() {
@@ -27,9 +28,7 @@ class _BillingScreenState extends State<BillingScreen> {
   }
 
   void _fetchData() {
-    if (_fromDate.isAfter(_toDate)) {
-      return;
-    }
+    if (_fromDate.isAfter(_toDate)) return;
     context.read<BillingProvider>().fetchBillingLines(
           from: _dateFormat.format(_fromDate),
           to: _dateFormat.format(_toDate),
@@ -53,13 +52,57 @@ class _BillingScreenState extends State<BillingScreen> {
       });
       if (_fromDate.isAfter(_toDate)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('"From" date cannot be later than "To" date.')),
+          const SnackBar(content: Text('"From" date cannot be later than "To" date.')),
         );
       } else {
         _fetchData();
       }
     }
+  }
+
+  void _showRateDialog(BuildContext context, BillingProvider provider) {
+    if (provider.billingData == null) return;
+    
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Set Capacity Rates'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: provider.rates.keys.map((capacity) {
+                final currentRate = provider.rates[capacity] ?? 0.0;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: TextFormField(
+                    initialValue: currentRate > 0 ? currentRate.toString() : '',
+                    decoration: InputDecoration(
+                      labelText: '$capacity KVA Rate',
+                      border: const OutlineInputBorder(),
+                      prefixText: '\$ ',
+                    ),
+                    keyboardType: TextInputType.number,
+                    onChanged: (val) {
+                      final newRate = double.tryParse(val);
+                      if (newRate != null) {
+                        provider.setRate(capacity, newRate);
+                      }
+                    },
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Done'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -79,8 +122,13 @@ class _BillingScreenState extends State<BillingScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Billing Lines'),
+        title: const Text('Billing History'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_applications),
+            tooltip: 'Set Capacity Rates',
+            onPressed: () => _showRateDialog(context, provider),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh billing data',
@@ -90,6 +138,7 @@ class _BillingScreenState extends State<BillingScreen> {
       ),
       body: Column(
         children: [
+          _buildSummaryBanner(context, provider),
           _buildFilters(context, provider),
           if (isInvalidRange)
             const Expanded(
@@ -100,8 +149,7 @@ class _BillingScreenState extends State<BillingScreen> {
               ),
             )
           else if (provider.isLoading)
-            const Expanded(
-                child: LoadingState(message: 'Loading billing lines...'))
+            const Expanded(child: LoadingState(message: 'Loading billing records...'))
           else if (provider.error != null)
             Expanded(
               child: ErrorState(
@@ -110,9 +158,37 @@ class _BillingScreenState extends State<BillingScreen> {
               ),
             )
           else
-            Expanded(child: _buildList(provider)),
+            Expanded(child: _buildGridList(provider)),
         ],
       ),
+    );
+  }
+
+  Widget _buildSummaryBanner(BuildContext context, BillingProvider provider) {
+    return Container(
+      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildSummaryItem('Total Revenue', provider.totalRevenue, Colors.green.shade700),
+          Container(width: 1, height: 40, color: Colors.grey.shade300),
+          _buildSummaryItem('Total Pending', provider.totalPending, Colors.orange.shade800),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryItem(String label, double amount, Color amountColor) {
+    return Column(
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54)),
+        const SizedBox(height: 4),
+        Text(
+          _currencyFormat.format(amount),
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: amountColor),
+        ),
+      ],
     );
   }
 
@@ -120,161 +196,95 @@ class _BillingScreenState extends State<BillingScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       color: Theme.of(context).cardColor,
-      child: Column(
+      child: Row(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: InkWell(
-                  onTap: () => _selectDate(context, true),
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                        labelText: 'From', border: OutlineInputBorder()),
-                    child: Text(_dateFormat.format(_fromDate)),
-                  ),
-                ),
+          Expanded(
+            child: InkWell(
+              onTap: () => _selectDate(context, true),
+              child: InputDecorator(
+                decoration: const InputDecoration(
+                    labelText: 'From', border: OutlineInputBorder(), isDense: true),
+                child: Text(_dateFormat.format(_fromDate)),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: InkWell(
-                  onTap: () => _selectDate(context, false),
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                        labelText: 'To', border: OutlineInputBorder()),
-                    child: Text(_dateFormat.format(_toDate)),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: DropdownButtonFormField<int>(
-                  decoration: const InputDecoration(
-                      labelText: 'Capacity (KVA)',
-                      border: OutlineInputBorder()),
-                  value: provider.capacityFilter,
-                  items: [
-                    const DropdownMenuItem<int>(
-                        value: null, child: Text('All Capacities')),
-                    ...provider.billingData?.capacities.map((c) =>
-                            DropdownMenuItem<int>(
-                                value: c, child: Text('$c KVA'))) ??
-                        [],
-                  ],
-                  onChanged: (val) => provider.setCapacityFilter(val),
-                ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: InkWell(
+              onTap: () => _selectDate(context, false),
+              child: InputDecorator(
+                decoration: const InputDecoration(
+                    labelText: 'To', border: OutlineInputBorder(), isDense: true),
+                child: Text(_dateFormat.format(_toDate)),
               ),
-              const SizedBox(width: 16),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade400),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Column(
-                  children: [
-                    const Text('Rows',
-                        style: TextStyle(fontSize: 10, color: Colors.grey)),
-                    Text('${provider.filteredRows.length}',
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildList(BillingProvider provider) {
+  Widget _buildGridList(BillingProvider provider) {
     final rows = provider.filteredRows;
     if (rows.isEmpty) {
       return const EmptyState(
         message: 'No billing lines found',
-        subMessage: 'Try adjusting your date range or filters.',
+        subMessage: 'Try adjusting your date range.',
       );
     }
 
-    return ListView.builder(
-      itemCount: rows.length,
-      itemBuilder: (context, index) {
-        final row = rows[index];
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: ListTile(
-            title: Text(row.vendorName),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                    'Vendor ID: ${row.vendorId} | Booking ID: ${row.bookingId}',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                const SizedBox(height: 4),
-                Text('Date: ${row.bookedDate} | Gen: ${row.generatorId}'),
-                Row(
-                  children: [
-                    _buildInventoryTypeBadge(row.inventoryType),
-                    const SizedBox(width: 8),
-                    Text('${row.capacityKva ?? "N/A"} KVA',
-                        style: const TextStyle(fontWeight: FontWeight.w500)),
-                  ],
-                ),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: SingleChildScrollView(
+        child: DataTable(
+          headingRowColor: WidgetStateProperty.all(const Color(0xFFF1F5F9)),
+          showCheckboxColumn: false,
+          columns: const [
+            DataColumn(label: Text('Invoice ID', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('Client', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('Issuance Date', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('Amount', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.bold))),
+          ],
+          rows: rows.map((row) {
+            final isPaid = provider.isPaid(row.bookingId);
+            final amount = provider.getAmountForCapacity(row.capacityKva);
+
+            return DataRow(
+              onSelectChanged: (selected) {
+                if (selected != null && selected) {
+                  provider.togglePaymentStatus(row.bookingId);
+                }
+              },
+              cells: [
+                DataCell(Text(row.bookingId.substring(0, 8).toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w600))),
+                DataCell(Text(row.vendorName)),
+                DataCell(Text(row.bookedDate)),
+                DataCell(Text(_currencyFormat.format(amount))),
+                DataCell(_buildStatusBadge(isPaid)),
               ],
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/bookings/${row.bookingId}'),
-          ),
-        );
-      },
+            );
+          }).toList(),
+        ),
+      ),
     );
   }
 
-  Widget _buildInventoryTypeBadge(String type) {
-    Color color;
-    switch (type.toLowerCase()) {
-      case 'retailer':
-        color = Colors.blue;
-        break;
-      case 'permanent':
-        color = Colors.green;
-        break;
-      case 'emergency':
-        color = Colors.orange;
-        break;
-      default:
-        color = Colors.grey;
-    }
+  Widget _buildStatusBadge(bool isPaid) {
+    final color = isPaid ? Colors.green : Colors.orange;
+    final text = isPaid ? 'PAID' : 'PENDING';
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Text(
-        type.toUpperCase(),
-        style:
-            TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+        text,
+        style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
       ),
-    );
-  }
-
-  Widget _buildErrorWidget(String message) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Icon(Icons.error_outline, color: Colors.red, size: 48),
-        const SizedBox(height: 16),
-        Text(message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.red)),
-        const SizedBox(height: 16),
-        ElevatedButton(onPressed: _fetchData, child: const Text('Retry')),
-      ],
     );
   }
 }
