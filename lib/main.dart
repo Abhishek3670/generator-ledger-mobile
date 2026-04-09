@@ -16,7 +16,7 @@ import 'features/dashboard/providers/dashboard_provider.dart';
 import 'features/billing/data/billing_repository.dart';
 import 'features/billing/providers/billing_provider.dart';
 import 'app/router.dart';
-
+import 'theme/clean_authority_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -68,32 +68,7 @@ class GensetLedgerApp extends StatelessWidget {
       title: 'Genset Ledger',
       debugShowCheckedModeBanner: false,
       routerConfig: router,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF0F172A),
-          primary: const Color(0xFF0F172A),
-          secondary: const Color(0xFF1E293B),
-          surface: Colors.white,
-          background: const Color(0xFFFAFAFA),
-          error: const Color(0xFFDC2626),
-        ),
-        textTheme: GoogleFonts.spaceGroteskTextTheme(
-          Theme.of(context).textTheme,
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF0F172A),
-          foregroundColor: Colors.white,
-          elevation: 0,
-        ),
-        cardTheme: CardThemeData(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: const BorderSide(color: Color(0xFFE2E8F0)),
-          ),
-        ),
-      ),
+      theme: CleanAuthorityTheme.lightTheme,
     );
   }
 }
