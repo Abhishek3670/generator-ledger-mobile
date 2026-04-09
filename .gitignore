@@ -48,3 +48,6 @@ app.*.map.json
 # Prompt artifacts
 gemini_*prompt*.json
 gemini_prompt*.json
+
+# Agent Operating Contracts
+/PROMPTS
