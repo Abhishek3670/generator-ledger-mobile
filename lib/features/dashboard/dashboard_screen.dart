@@ -6,7 +6,9 @@ import 'package:go_router/go_router.dart';
 import 'providers/dashboard_provider.dart';
 import 'models/dashboard_models.dart';
 import '../../shared/widgets/state_widgets.dart';
-
+import '../../widgets/shared/corporate_app_bar.dart';
+import '../../widgets/shared/status_alert_card.dart';
+import 'widgets/dashboard_asset_row.dart';
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -15,7 +17,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  CalendarFormat _calendarFormat = CalendarFormat.month;
+  CalendarFormat _calendarFormat = CalendarFormat.week;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   DayDetail? _selectedDayDetail;
@@ -64,8 +66,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final provider = context.watch<DashboardProvider>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Genset Ledger'),
+      appBar: CorporateAppBar(
+        title: 'Dashboard',
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -209,7 +211,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.1),
+                  color: statusColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -265,7 +267,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           trailing: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.1),
+              color: statusColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
@@ -319,48 +321,58 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildCalendar(DashboardProvider provider) {
-    return Card(
-      child: Column(
-        children: [
-          TableCalendar(
-            firstDay: DateTime.utc(2020, 1, 1),
-            lastDay: DateTime.utc(2030, 12, 31),
-            focusedDay: _focusedDay,
-            calendarFormat: _calendarFormat,
-            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-            onDaySelected: _onDaySelected,
-            onFormatChanged: (format) {
-              setState(() {
-                _calendarFormat = format;
-              });
-            },
-            onPageChanged: (focusedDay) {
-              _focusedDay = focusedDay;
-            },
-            eventLoader: (day) {
-              final dateStr = DateFormat('yyyy-MM-dd').format(day);
-              return provider.calendarEvents
-                  .where((e) => e.start == dateStr)
-                  .toList();
-            },
-            calendarStyle: const CalendarStyle(
-              markerDecoration: BoxDecoration(
-                color: Color(0xFF0F172A),
-                shape: BoxShape.circle,
-              ),
+    return Column(
+      children: [
+        TableCalendar(
+          firstDay: DateTime.utc(2020, 1, 1),
+          lastDay: DateTime.utc(2030, 12, 31),
+          focusedDay: _focusedDay,
+          calendarFormat: _calendarFormat,
+          selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+          onDaySelected: _onDaySelected,
+          onFormatChanged: (format) {
+            setState(() {
+              _calendarFormat = format;
+            });
+          },
+          onPageChanged: (focusedDay) {
+            _focusedDay = focusedDay;
+          },
+          eventLoader: (day) {
+            final dateStr = DateFormat('yyyy-MM-dd').format(day);
+            return provider.calendarEvents
+                .where((e) => e.start == dateStr)
+                .toList();
+          },
+          headerStyle: HeaderStyle(
+            formatButtonVisible: false,
+            titleCentered: true,
+            titleTextStyle: Theme.of(context).textTheme.titleMedium!.copyWith(fontWeight: FontWeight.bold),
+          ),
+          calendarStyle: CalendarStyle(
+            markerDecoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary,
+              shape: BoxShape.circle,
+            ),
+            selectedDecoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary,
+              shape: BoxShape.circle,
+            ),
+            todayDecoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+              shape: BoxShape.circle,
             ),
           ),
-          if (provider.calendarEvents.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text(
-                'No events scheduled in the current range.',
-                style:
-                    TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
-              ),
+        ),
+        if (provider.calendarEvents.isEmpty)
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
+              'No events scheduled in the current range.',
+              style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 
@@ -411,59 +423,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
         ),
-        ...vendor.bookings.map(_buildBookingCard),
+        ...vendor.bookings.map((b) => _buildBookingCard(b, vendor.vendorName)),
       ],
     );
   }
 
-  Widget _buildBookingCard(BookingDayDetail booking) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: InkWell(
-        onTap: () => context.push('/bookings/${booking.bookingId}'),
-        child: Semantics(
-          label: 'Booking #${booking.bookingId}',
-          hint: 'Double tap to view booking details',
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Booking #${booking.bookingId}',
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
-                    const Icon(Icons.chevron_right, size: 20),
-                  ],
-                ),
-                const Divider(),
-                ...booking.items.map((item) => Padding(
-                      padding: const EdgeInsets.only(top: 4.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                              'Generator: ${item.generatorId} (${item.capacityKva ?? 'N/A'} KVA)'),
-                          Text(
-                            '${_formatTime(item.startDt)} - ${_formatTime(item.endDt)}',
-                            style: const TextStyle(
-                                fontSize: 12, color: Colors.grey),
-                          ),
-                          if (item.remarks.isNotEmpty)
-                            Text(
-                              'Remarks: ${item.remarks}',
-                              style: const TextStyle(
-                                  fontSize: 12, fontStyle: FontStyle.italic),
-                            ),
-                        ],
-                      ),
-                    )),
-              ],
-            ),
-          ),
-        ),
-      ),
+  Widget _buildBookingCard(BookingDayDetail booking, String vendorName) {
+    return Column(
+      children: booking.items.map((item) {
+        return DashboardAssetRow(
+          booking: booking,
+          item: item,
+          vendorName: vendorName,
+          onTap: () => context.push('/bookings/${booking.bookingId}'),
+        );
+      }).toList(),
     );
   }
 
