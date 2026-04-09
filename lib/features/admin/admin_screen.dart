@@ -1,9 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/auth/permission_service.dart';
+import '../../widgets/shared/corporate_app_bar.dart';
 
 class AdminScreen extends StatelessWidget {
   const AdminScreen({super.key});
+
+  void _handleTileTap(BuildContext context, String moduleName) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Opening $moduleName sub-menu...'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _handleSignOut(BuildContext context) {
+    // ScaffoldMessenger is used as a placeholder for the actual sign out call
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Logging out of Genset Ledger...'),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +33,7 @@ class AdminScreen extends StatelessWidget {
 
     if (!canAdmin) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Admin')),
+        appBar: const CorporateAppBar(title: 'Admin & Settings'),
         body: const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -31,181 +52,178 @@ class AdminScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Admin & Settings'),
+      appBar: const CorporateAppBar(
+        title: 'Admin & Settings',
       ),
+      backgroundColor: const Color(0xFFF8FAFC), // Scaffold background from Concept C
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildInfoCard(context),
-            const SizedBox(height: 24),
-            Text(
-              'System Capability Matrix',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'The following capabilities are defined in the backend and used for permission gating across the application.',
-              style: TextStyle(color: Colors.grey, fontSize: 13),
-            ),
-            const SizedBox(height: 16),
-            _buildCapabilityMatrix(),
-            const SizedBox(height: 24),
-            _buildManagementNote(context),
-          ],
-        ),
-      ),
-    );
-  }
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildSectionHeader('Account Management'),
+              _buildSettingsTile(
+                context,
+                title: 'Profile',
+                subtitle: 'Manage your personal operator details',
+                icon: Icons.account_circle_outlined,
+                onTap: () => _handleTileTap(context, 'Profile'),
+              ),
+              _buildSettingsTile(
+                context,
+                title: 'Security',
+                subtitle: 'Passwords, biometric login, and 2FA',
+                icon: Icons.shield_outlined,
+                onTap: () => _handleTileTap(context, 'Security'),
+              ),
+              
+              const SizedBox(height: 32),
+              
+              _buildSectionHeader('System Administration'),
+              _buildSettingsTile(
+                context,
+                title: 'User Roles',
+                subtitle: 'Permissions and access levels for your fleet',
+                icon: Icons.group_outlined,
+                onTap: () => _handleTileTap(context, 'User Roles'),
+              ),
+              _buildSettingsTile(
+                context,
+                title: 'Data Export',
+                subtitle: 'Download operational logs and reports',
+                icon: Icons.file_download_outlined,
+                onTap: () => _handleTileTap(context, 'Data Export'),
+              ),
+              _buildSettingsTile(
+                context,
+                title: 'System Preferences',
+                subtitle: 'Offline mode, auto-billing, and synchronization',
+                icon: Icons.settings_applications_outlined,
+                onTap: () => _handleTileTap(context, 'System Preferences'),
+              ),
 
-  Widget _buildInfoCard(BuildContext context) {
-    return Card(
-      elevation: 0,
-      color: Colors.blue.shade50,
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.blue.shade200),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: const Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Icon(Icons.info_outline, color: Colors.blue),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'User Management Notice',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.blue),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Mobile user creation, role assignment, and permission overrides are currently read-only. '
-              'To manage users or modify permissions, please use the web administration portal.',
-              style: TextStyle(fontSize: 13),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+              const SizedBox(height: 48),
 
-  Widget _buildCapabilityMatrix() {
-    final capabilities = [
-      {
-        'key': PermissionService.settingsUserAdmin,
-        'label': 'Settings & User Admin',
-        'desc': 'Access to this admin panel and user management.'
-      },
-      {
-        'key': PermissionService.monitorAccess,
-        'label': 'Monitor Access',
-        'desc': 'View live system metrics and health status.'
-      },
-      {
-        'key': PermissionService.vendorManagement,
-        'label': 'Vendor Management',
-        'desc': 'Create and manage vendor records.'
-      },
-      {
-        'key': PermissionService.generatorManagement,
-        'label': 'Generator Management',
-        'desc': 'Manage generator inventory.'
-      },
-      {
-        'key': PermissionService.bookingCreateUpdate,
-        'label': 'Booking Write',
-        'desc': 'Create and update bookings.'
-      },
-      {
-        'key': PermissionService.bookingDelete,
-        'label': 'Booking Delete',
-        'desc': 'Ability to delete existing bookings.'
-      },
-      {
-        'key': PermissionService.billingAccess,
-        'label': 'Billing Access',
-        'desc': 'View billing lines and financial data.'
-      },
-      {
-        'key': PermissionService.exportAccess,
-        'label': 'Export Access',
-        'desc': 'Ability to export data reports.'
-      },
-      {
-        'key': PermissionService.readOnlyOperationalViews,
-        'label': 'Operational View',
-        'desc': 'Read-only access to operational data.'
-      },
-    ];
-
-    return Column(
-      children: capabilities.map((cap) {
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: ListTile(
-            title: Text(cap['label']!,
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(cap['desc']!, style: const TextStyle(fontSize: 12)),
-                const SizedBox(height: 4),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    cap['key']!,
-                    style: const TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 10,
-                        color: Colors.blueGrey),
-                  ),
-                ),
-              ],
-            ),
+              _buildSignOutButton(context),
+              const SizedBox(height: 24),
+            ],
           ),
-        );
-      }).toList(),
+        ),
+      ),
     );
   }
 
-  Widget _buildManagementNote(BuildContext context) {
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8.0, bottom: 12.0),
+      child: Text(
+        title.toUpperCase(),
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: Colors.black54,
+          letterSpacing: 1.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsTile(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 12.0),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Operational Management',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Vendor and Generator management capabilities are integrated into the Directory module. '
-            'If you have the required permissions, you can manage these records directly from the Directory screens.',
-            style: TextStyle(fontSize: 13, color: Colors.black87),
-          ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            offset: const Offset(0, 2),
+            blurRadius: 4,
+          )
         ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right,
+                  color: Colors.grey.shade400,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSignOutButton(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: () => _handleSignOut(context),
+      icon: const Icon(Icons.logout, color: Colors.red),
+      label: const Text(
+        'SIGN OUT',
+        style: TextStyle(
+          color: Colors.red,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      style: OutlinedButton.styleFrom(
+        side: BorderSide(color: Colors.red.withValues(alpha: 0.5), width: 1.5),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        backgroundColor: Colors.red.withValues(alpha: 0.05),
       ),
     );
   }
