@@ -54,3 +54,9 @@ gemini_prompt*.json
 /PROMPTS/*
 /PROMPTS/**/*
 GITOPS/git_agent.json
+do_audit.py
+fix_audit.py
+patch_audit_p8_v2.py
+patch_audit_p8.py
+run_ca_agent.py
+update_audit_final.py
