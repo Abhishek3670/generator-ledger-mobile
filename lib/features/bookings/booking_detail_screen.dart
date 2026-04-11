@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'providers/booking_provider.dart';
 import '../vendors/providers/vendor_provider.dart';
@@ -109,19 +110,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           if (canManage) ...[
             IconButton(
               icon: const Icon(Icons.edit_note),
-              onPressed: () {
-                final provider = context.read<BookingProvider>();
-                final data = provider.selectedBooking;
-                if (data != null) {
-                  showDialog(
-                    context: context,
-                    builder: (context) => BookingItemEditForm(
-                      bookingId: widget.bookingId,
-                      existingItems: data.items,
-                    ),
-                  );
-                }
-              },
+              onPressed: () => context.push('/bookings/${widget.bookingId}/edit'),
               tooltip: 'Edit Items',
             ),
             IconButton(

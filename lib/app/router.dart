@@ -11,6 +11,8 @@ import '../features/bookings/bookings_list_screen.dart';
 import '../features/bookings/booking_detail_screen.dart';
 import '../features/directory/directory_screen.dart';
 import '../features/admin/admin_screen.dart';
+import '../features/bookings/create_booking_screen.dart';
+import '../features/bookings/edit_booking_screen.dart';
 import 'app_scaffold.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -61,6 +63,10 @@ class AppRouter {
               builder: (context, state) => const HistoryScreen(),
             ),
             GoRoute(
+              path: '/create-booking',
+              builder: (context, state) => const CreateBookingPage(),
+            ),
+            GoRoute(
               path: '/bookings',
               builder: (context, state) => const BookingsListScreen(),
               routes: [
@@ -69,6 +75,14 @@ class AppRouter {
                   builder: (context, state) => BookingDetailScreen(
                     bookingId: state.pathParameters['id']!,
                   ),
+                  routes: [
+                    GoRoute(
+                      path: 'edit',
+                      builder: (context, state) => EditBookingPage(
+                        bookingId: state.pathParameters['id']!,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
