@@ -1,0 +1,43 @@
+name: iOS Flutter Build
+
+on:
+  # This makes the action run on every push to the master branch
+  # You can remove 'push' if you only want to trigger it manually
+  push:
+    branches:
+      - master
+  # This allows you to manually run the action from the GitHub Actions tab
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    name: Build iOS IPA
+    # Apple apps must be built on macOS
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          
+      - name: Install dependencies
+        run: flutter pub get
+        
+      - name: Install CocoaPods
+        run: cd ios && pod install
+
+      # NOTE: By default, this builds a raw iOS app that is unsigned. 
+      # To build a signed .ipa for TestFlight, you need an Apple Developer Account.
+      # You will need to store your provisioning profile and distribution certificate 
+      # inside GitHub Secrets and use them here. 
+      
+      - name: Build iOS App (Unsigned)
+        run: flutter build ios --release --no-codesign
+        
+      # Once you configure your Apple Certificates, comment out the line above
+      # and uncomment the line below to build the deployable .ipa:
+      # - name: Build Signed IPA
+      #   run: flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
