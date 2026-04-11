@@ -7,7 +7,6 @@ import 'providers/dashboard_provider.dart';
 import 'models/dashboard_models.dart';
 import '../../shared/widgets/state_widgets.dart';
 import '../../widgets/shared/corporate_app_bar.dart';
-import '../../widgets/shared/status_alert_card.dart';
 import 'widgets/dashboard_asset_row.dart';
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});

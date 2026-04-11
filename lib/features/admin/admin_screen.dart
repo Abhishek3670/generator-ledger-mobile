@@ -32,9 +32,9 @@ class AdminScreen extends StatelessWidget {
     final canAdmin = permissionService.can(PermissionService.settingsUserAdmin);
 
     if (!canAdmin) {
-      return Scaffold(
-        appBar: const CorporateAppBar(title: 'Admin & Settings'),
-        body: const Center(
+      return const Scaffold(
+        appBar: CorporateAppBar(title: 'Admin & Settings'),
+        body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

@@ -33,7 +33,7 @@ class DashboardAssetRow extends StatelessWidget {
     // Determine status purely for UI demonstration (e.g., active if today)
     // Here we'll treat all scheduled items as ACTIVE for this simple view
     const statusText = 'SCHEDULED';
-    final statusColor = CleanAuthorityTheme.primary;
+    const statusColor = CleanAuthorityTheme.primary;
 
     return InkWell(
       onTap: onTap,

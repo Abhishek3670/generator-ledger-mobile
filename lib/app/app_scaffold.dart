@@ -26,7 +26,9 @@ class AppScaffold extends StatelessWidget {
     if (location.startsWith('/more') ||
         location.startsWith('/admin') ||
         location.startsWith('/billing') ||
-        location.startsWith('/history')) return 3;
+        location.startsWith('/history')) {
+      return 3;
+    }
     return 0;
   }
 

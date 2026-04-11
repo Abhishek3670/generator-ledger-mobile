@@ -26,10 +26,10 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
+    return const DefaultTabController(
       length: 3,
       child: Scaffold(
-        appBar: const CorporateAppBar(
+        appBar: CorporateAppBar(
           title: 'Directory',
           bottom: TabBar(
             tabs: [
@@ -42,7 +42,7 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
             unselectedLabelColor: Colors.white70,
           ),
         ),
-        body: const TabBarView(
+        body: TabBarView(
           children: [
             _GeneratorsTable(),
             _VendorsTable(),

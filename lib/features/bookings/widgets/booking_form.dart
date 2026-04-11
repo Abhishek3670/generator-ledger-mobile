@@ -164,7 +164,7 @@ class _BookingFormState extends State<BookingForm> {
             mainAxisSize: MainAxisSize.min,
             children: [
               DropdownButtonFormField<String>(
-                value: _selectedVendorId,
+                initialValue: _selectedVendorId,
                 items: vendors
                     .map((v) =>
                         DropdownMenuItem(value: v.id, child: Text(v.name)))
@@ -232,9 +232,10 @@ class _BookingFormState extends State<BookingForm> {
                           lastDate:
                               DateTime.now().add(const Duration(days: 365)),
                         );
-                        if (d != null)
+                        if (d != null) {
                           setState(() =>
                               item.date = DateFormat('yyyy-MM-dd').format(d));
+                        }
                       },
                     ),
                     if (item.date != null)

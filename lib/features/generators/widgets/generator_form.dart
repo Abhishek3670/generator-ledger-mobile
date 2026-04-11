@@ -125,15 +125,16 @@ class _GeneratorFormState extends State<GeneratorForm> {
                 decoration: const InputDecoration(labelText: 'Capacity (kVA)'),
                 keyboardType: TextInputType.number,
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty)
+                  if (v == null || v.trim().isEmpty) {
                     return 'Capacity is required';
+                  }
                   final n = int.tryParse(v);
                   if (n == null || n <= 0) return 'Must be a positive number';
                   return null;
                 },
               ),
               DropdownButtonFormField<String>(
-                value: _type,
+                initialValue: _type,
                 items: _types
                     .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                     .toList(),
@@ -146,7 +147,7 @@ class _GeneratorFormState extends State<GeneratorForm> {
                     const InputDecoration(labelText: 'Identification / ID'),
               ),
               DropdownButtonFormField<String>(
-                value: _status,
+                initialValue: _status,
                 items: _statuses
                     .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                     .toList(),
@@ -154,7 +155,7 @@ class _GeneratorFormState extends State<GeneratorForm> {
                 decoration: const InputDecoration(labelText: 'Status'),
               ),
               DropdownButtonFormField<String>(
-                value: _inventoryType,
+                initialValue: _inventoryType,
                 items: _inventoryTypes
                     .map((it) => DropdownMenuItem(value: it, child: Text(it)))
                     .toList(),
@@ -167,7 +168,7 @@ class _GeneratorFormState extends State<GeneratorForm> {
               ),
               if (_inventoryType == 'permanent')
                 DropdownButtonFormField<String>(
-                  value: _rentalVendorId,
+                  initialValue: _rentalVendorId,
                   items: rentalVendors
                       .map((rv) => DropdownMenuItem(
                           value: rv.rentalVendorId, child: Text(rv.name)))
