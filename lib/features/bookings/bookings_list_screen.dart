@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'providers/booking_provider.dart';
 import '../vendors/providers/vendor_provider.dart';
@@ -129,7 +128,10 @@ class _BookingsListScreenState extends State<BookingsListScreen> {
       ),
       floatingActionButton: canCreate
           ? FloatingActionButton(
-              onPressed: () => context.push('/create-booking'),
+              onPressed: () => showDialog(
+                context: context,
+                builder: (context) => const BookingForm(),
+              ),
               tooltip: 'Add new booking',
               child: const Icon(Icons.add),
             )
