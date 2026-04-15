@@ -56,7 +56,7 @@ class CleanAuthorityTheme {
           backgroundColor: primary,
           foregroundColor: Colors.white,
           elevation: 2, // Subtle tonal shadow instead of stark
-          shadowColor: primary.withOpacity(0.4),
+          shadowColor: primary.withValues(alpha: 0.4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(borderRadius),
           ),
@@ -84,7 +84,7 @@ class CleanAuthorityTheme {
         fillColor: surface,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         labelStyle: textTheme.bodyMedium?.copyWith(color: onSurfaceVariant),
-        hintStyle: textTheme.bodyMedium?.copyWith(color: onSurfaceVariant.withOpacity(0.6)),
+        hintStyle: textTheme.bodyMedium?.copyWith(color: onSurfaceVariant.withValues(alpha: 0.6)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
           borderSide: const BorderSide(color: surfaceContainerHigh),
@@ -120,7 +120,7 @@ class CleanAuthorityTheme {
         backgroundColor: surface,
         foregroundColor: onSurface,
         elevation: 1, // subtle corporative elevation
-        shadowColor: Colors.black.withOpacity(0.05),
+        shadowColor: Colors.black.withValues(alpha: 0.05),
         centerTitle: true,
         titleTextStyle: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
       ),
@@ -129,7 +129,7 @@ class CleanAuthorityTheme {
       cardTheme: CardThemeData(
         color: surface,
         elevation: 1,
-        shadowColor: Colors.black.withOpacity(0.05),
+        shadowColor: Colors.black.withValues(alpha: 0.05),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(borderRadius),
         ),

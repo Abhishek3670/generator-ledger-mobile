@@ -212,7 +212,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       margin: const EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: color.withOpacity(0.3), width: 1),
+        side: BorderSide(color: color.withValues(alpha: 0.3), width: 1),
       ),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
@@ -234,7 +234,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
+                      color: Colors.red.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: const Text(

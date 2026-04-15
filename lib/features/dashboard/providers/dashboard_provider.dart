@@ -74,11 +74,11 @@ class DashboardProvider extends ChangeNotifier {
       ]);
 
       _summaryData = DashboardSummary(
-        totalGenerators: results[0] as int,
-        activeGenerators: results[1] as int,
-        totalBookings: results[2] as int,
-        confirmedBookings: results[3] as int,
-        totalVendors: results[4] as int,
+        totalGenerators: results[0],
+        activeGenerators: results[1],
+        totalBookings: results[2],
+        confirmedBookings: results[3],
+        totalVendors: results[4],
         todayBookings: 0, // No specific endpoint or metadata for "today" in current JSON contracts
         pendingInvoices: null, // No backend contract available
         pendingInvoicesAmount: null, // No backend contract available

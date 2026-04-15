@@ -87,7 +87,7 @@ class GeneratorCard extends StatelessWidget {
             'Generator: ${generator.identification}, Type: ${generator.type}, Status: ${generator.status}',
         child: ListTile(
           leading: CircleAvatar(
-            backgroundColor: statusColor.withOpacity(0.1),
+            backgroundColor: statusColor.withValues(alpha: 0.1),
             child: Text(
               '${generator.capacity}',
               style: TextStyle(color: statusColor, fontWeight: FontWeight.bold),

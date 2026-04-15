@@ -39,7 +39,7 @@ class SummaryMetricsGrid extends StatelessWidget {
             icon: Icons.business,
             color: Colors.orange,
           ),
-          _MetricCard(
+          const _MetricCard(
             title: 'Overdue Alerts',
             value: '-',
             subtitle: 'Data Unavailable',

@@ -39,7 +39,7 @@ class DirectorySearchBar extends StatelessWidget {
           Theme.of(context)
               .colorScheme
               .surfaceContainerHighest
-              .withOpacity(0.3),
+              .withValues(alpha: 0.3),
         ),
       ),
     );

@@ -41,6 +41,7 @@ class _BillingScreenState extends State<BillingScreen> {
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
     );
+    if (!context.mounted) return;
     if (picked != null) {
       setState(() {
         if (isFrom) {

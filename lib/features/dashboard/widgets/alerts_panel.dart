@@ -34,13 +34,13 @@ class AlertsPanel extends StatelessWidget {
                 child: Center(
                   child: Column(
                     children: [
-                      const Icon(Icons.info_outline, color: Colors.grey, size: 32),
-                      const SizedBox(height: 8),
-                      const Text(
+                      Icon(Icons.info_outline, color: Colors.grey, size: 32),
+                      SizedBox(height: 8),
+                      Text(
                         'Alert data unavailable.',
                         style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500),
                       ),
-                      const Text(
+                      Text(
                         'Not supported by current backend contract.',
                         style: TextStyle(fontSize: 10, color: Colors.grey),
                       ),
