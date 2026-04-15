@@ -2,9 +2,21 @@
 
 All notable changes to the Flutter mobile client should be recorded in this file.
 
-## [Unreleased]
+## [0.9.0] - 2026-04-15
+### Added
+- Phase 9 Dashboard Redesign: Functional parity with the web application.
+- Derived "Confirmed" booking metrics from `/api/bookings` status field.
+- "Total Vendors" summary card in the dashboard metrics grid.
+- Truthful "Data Unavailable" states for metrics and alerts without backend contracts.
 
-- No unreleased mobile changes recorded after `0.4.0` yet.
+### Changed
+- Refactored `DashboardRepository` and `DashboardProvider` to utilize title-case backend status values ('Active', 'Confirmed').
+- Consolidated `AlertsPanel` rendering to a single truthful section, removing redundant "unavailable" blocks.
+- Renamed "Active Bookings" to "Total Bookings" to accurately reflect current repository data.
+
+### Fixed
+- Status filtering mismatch where repository used lowercase instead of backend-emitted title-case.
+- Duplicate alerts panel display in `DashboardScreen`.
 
 ## [0.4.0] - 2026-04-09
 ### Added

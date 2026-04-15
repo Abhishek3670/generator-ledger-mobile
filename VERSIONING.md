@@ -4,10 +4,10 @@ This file defines release tracking for the Flutter mobile client in this reposit
 
 ## Current Version Position
 
-- `0.3.0`
-  Status: approved phase-3 bookings baseline
+- `0.9.0`
+  Status: approved phase-9 dashboard redesign baseline
   Environment: local repository
-  Meaning: phase-2 baseline plus backend-connected bookings list/detail/create/edit flows, emergency fallback handling, and capability-gated booking actions.
+  Meaning: phase-9 dashboard redesign finalized with truthful backend metrics, unified alerts, and full parity with the web dashboard summary.
 
 ## Versioning Scheme
 
@@ -29,9 +29,9 @@ Use Semantic Versioning for the mobile app: `MAJOR.MINOR.PATCH`
 | `0.1.0` | Approved | Phase 1 foundation: app shell, routing, auth persistence, logout safety, permission defaults |
 | `0.2.0` | Approved | Phase 2 directory foundation: vendors, generators, repositories, and shared filters |
 | `0.3.0` | Approved | Phase 3 booking flows |
-| `0.4.0` | Planned | Phase 4 dashboard and calendar flows |
+| `0.4.0` | Approved | Phase 4 dashboard and calendar flows |
 | `0.5.0` | Planned | Phase 5 billing and history |
-| `0.6.0` | Planned | Phase 6 admin settings and monitor |
+| `0.9.0` | Approved | Phase 9 dashboard redesign |
 | `1.0.0` | Future target | Production-ready mobile release after all major phases, QA, and contract validation |
 
 ## Source Of Truth
