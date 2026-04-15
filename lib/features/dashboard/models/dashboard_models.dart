@@ -199,3 +199,75 @@ class BookingItemDayDetail {
     );
   }
 }
+class DashboardSummary {
+  final int totalGenerators;
+  final int activeGenerators;
+  final int totalBookings;
+  final int confirmedBookings;
+  final int todayBookings;
+  final int totalVendors;
+  final int? pendingInvoices;
+  final double? pendingInvoicesAmount;
+  final int? overdueAlerts;
+
+  DashboardSummary({
+    required this.totalGenerators,
+    required this.activeGenerators,
+    required this.totalBookings,
+    required this.confirmedBookings,
+    required this.todayBookings,
+    required this.totalVendors,
+    this.pendingInvoices,
+    this.pendingInvoicesAmount,
+    this.overdueAlerts,
+  });
+
+  bool get isInvoicesAvailable => pendingInvoices != null;
+  bool get isAlertsAvailable => overdueAlerts != null;
+
+  factory DashboardSummary.fromJson(Map<String, dynamic> json) {
+    return DashboardSummary(
+      totalGenerators: json['total_generators'] ?? 0,
+      activeGenerators: json['active_generators'] ?? 0,
+      totalBookings: json['total_bookings'] ?? 0,
+      confirmedBookings: json['confirmed_bookings'] ?? 0,
+      todayBookings: json['today_bookings'] ?? 0,
+      totalVendors: json['total_vendors'] ?? 0,
+      pendingInvoices: json['pending_invoices'],
+      pendingInvoicesAmount: (json['pending_invoices_amount'] as num?)?.toDouble(),
+      overdueAlerts: json['overdue_alerts'],
+    );
+  }
+}
+
+class DashboardAlert {
+  final String id;
+  final String type; // 'overdue_invoice', 'expiring_booking', 'maintenance', 'system'
+  final String severity; // 'critical', 'warning', 'info'
+  final String title;
+  final String detail;
+  final String? route;
+  final String? dueDate;
+
+  DashboardAlert({
+    required this.id,
+    required this.type,
+    required this.severity,
+    required this.title,
+    required this.detail,
+    this.route,
+    this.dueDate,
+  });
+
+  factory DashboardAlert.fromJson(Map<String, dynamic> json) {
+    return DashboardAlert(
+      id: json['id'],
+      type: json['type'],
+      severity: json['severity'],
+      title: json['title'],
+      detail: json['detail'],
+      route: json['route'],
+      dueDate: json['due_date'],
+    );
+  }
+}

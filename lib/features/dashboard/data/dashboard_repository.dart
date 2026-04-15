@@ -37,4 +37,42 @@ class DashboardRepository {
       rethrow;
     }
   }
+
+  static const String statusActive = 'Active';
+  static const String statusConfirmed = 'Confirmed';
+
+  Future<int> getGeneratorCount({bool activeOnly = false}) async {
+    try {
+      final response = await _apiClient.dio.get('/api/generators');
+      final list = response.data as List;
+      if (activeOnly) {
+        return list.where((g) => g['status'] == statusActive).length;
+      }
+      return list.length;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<int> getBookingCount({bool onlyConfirmed = false}) async {
+    try {
+      final response = await _apiClient.dio.get('/api/bookings');
+      final list = response.data as List;
+      if (onlyConfirmed) {
+        return list.where((b) => b['status'] == statusConfirmed).length;
+      }
+      return list.length;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<int> getVendorCount() async {
+    try {
+      final response = await _apiClient.dio.get('/api/vendors');
+      return (response.data as List).length;
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

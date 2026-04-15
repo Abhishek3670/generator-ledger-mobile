@@ -8,6 +8,10 @@ import 'models/dashboard_models.dart';
 import '../../shared/widgets/state_widgets.dart';
 import '../../widgets/shared/corporate_app_bar.dart';
 import 'widgets/dashboard_asset_row.dart';
+import 'widgets/summary_metrics_grid.dart';
+import 'widgets/quick_actions_grid.dart';
+import 'widgets/alerts_panel.dart';
+
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -16,7 +20,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  CalendarFormat _calendarFormat = CalendarFormat.week;
+  CalendarFormat _calendarFormat = CalendarFormat.month; // Default to month for parity
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   DayDetail? _selectedDayDetail;
@@ -65,9 +69,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final provider = context.watch<DashboardProvider>();
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA), // Premium off-white background
       appBar: CorporateAppBar(
-        title: 'Dashboard',
+        title: 'Genset Dashboard',
         actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_none, color: Color(0xFF1A237E)),
+            onPressed: () {},
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () => provider.refreshAll(),
@@ -81,10 +90,50 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildMonitorPanel(provider),
+              // 1. Summary Metrics
+              if (provider.isLoadingSummary)
+                const Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (provider.summaryData != null)
+                SummaryMetricsGrid(summary: provider.summaryData!)
+              else if (provider.summaryError != null)
+                ErrorState(
+                  message: 'Metrics: ${provider.summaryError}',
+                  onRetry: () => provider.fetchSummaryData(),
+                ),
+
+              // 2. Quick Actions
+              const QuickActionsGrid(),
+
+              // 3. Alerts
+              if (provider.isLoadingAlerts)
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: LoadingState(message: 'Loading alerts...'),
+                )
+              else if (provider.alertsError != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: ErrorState(
+                    message: 'Alerts: ${provider.alertsError}',
+                    onRetry: () => provider.fetchAlerts(),
+                  ),
+                )
+              else
+                AlertsPanel(alerts: provider.alerts),
+
+              // 4. Operational Calendar
               _buildCalendarSection(provider),
+
+              // 5. Day Details
               if (_selectedDay != null) _buildDayDetailSection(provider),
-              const SizedBox(height: 24),
+
+              // 7. System Monitor (Secondary)
+              _buildMonitorPanel(provider),
+
+              const SizedBox(height: 32),
             ],
           ),
         ),
@@ -113,55 +162,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final data = provider.monitorData;
     if (data == null) return const SizedBox.shrink();
 
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return ExpansionTile(
+      title: const Text('System Infrastructure Health',
+        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Column(
             children: [
-              Text(
-                'System Monitor',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleLarge
-                    ?.copyWith(fontWeight: FontWeight.bold),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildMonitorCard(
+                      'CPU',
+                      '${data.cpu.percent}%',
+                      data.cpu.status,
+                      Icons.developer_board,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildMonitorCard(
+                      'Memory',
+                      '${data.memory.percent}%',
+                      data.memory.status,
+                      Icons.memory,
+                      subtitle:
+                          '${data.memory.usedMb.toInt()} / ${data.memory.totalMb.toInt()} MB',
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                'Last updated: ${data.timestamp}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+              const SizedBox(height: 8),
+              _buildTemperatureCard(data.temperature),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildMonitorCard(
-                  'CPU',
-                  '${data.cpu.percent}%',
-                  data.cpu.status,
-                  Icons.developer_board,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildMonitorCard(
-                  'Memory',
-                  '${data.memory.percent}%',
-                  data.memory.status,
-                  Icons.memory,
-                  subtitle:
-                      '${data.memory.usedMb.toInt()} / ${data.memory.totalMb.toInt()} MB',
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          _buildTemperatureCard(data.temperature),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

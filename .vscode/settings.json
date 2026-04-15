@@ -1,3 +1,4 @@
 {
-    "cmake.sourceDirectory": "W:/Aatish/Stuff/gensetledgermobile/flutter_app/windows"
+    "cmake.sourceDirectory": "W:/Aatish/Stuff/gensetledgermobile/flutter_app/windows",
+    "remote.autoForwardPortsFallback": 0
 }
