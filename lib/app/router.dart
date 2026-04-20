@@ -9,7 +9,8 @@ import '../features/billing/billing_screen.dart';
 import '../features/history/history_screen.dart';
 import '../features/bookings/bookings_list_screen.dart';
 import '../features/bookings/booking_detail_screen.dart';
-import '../features/directory/directory_screen.dart';
+import '../features/gensets/gensets_screen.dart';
+import '../features/vendors/vendors_list_screen.dart';
 import '../features/admin/admin_screen.dart';
 import 'app_scaffold.dart';
 
@@ -73,8 +74,12 @@ class AppRouter {
               ],
             ),
             GoRoute(
-              path: '/directory',
-              builder: (context, state) => const DirectoryScreen(),
+              path: '/gensets',
+              builder: (context, state) => const GensetsScreen(),
+            ),
+            GoRoute(
+              path: '/vendors',
+              builder: (context, state) => const VendorsListScreen(),
             ),
             GoRoute(
               path: '/more',
@@ -83,6 +88,10 @@ class AppRouter {
             GoRoute(
               path: '/admin',
               builder: (context, state) => const AdminScreen(),
+            ),
+            GoRoute(
+              path: '/directory',
+              redirect: (context, state) => '/gensets',
             ),
           ],
         ),

@@ -22,14 +22,19 @@ class AppBottomNav extends StatelessWidget {
           label: 'Dashboard',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.calendar_today_outlined),
-          activeIcon: Icon(Icons.calendar_today),
-          label: 'Schedule',
+          icon: Icon(Icons.calendar_month_outlined),
+          activeIcon: Icon(Icons.calendar_month),
+          label: 'Bookings',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.list_alt_outlined),
-          activeIcon: Icon(Icons.list_alt),
-          label: 'Assets',
+          icon: Icon(Icons.inventory_2_outlined),
+          activeIcon: Icon(Icons.inventory_2),
+          label: 'Gensets',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.storefront_outlined),
+          activeIcon: Icon(Icons.storefront),
+          label: 'Vendors',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.settings_outlined),
