@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../auth/auth_provider.dart';
 import 'api_config.dart';
 
@@ -22,13 +23,35 @@ class ApiClient {
         }
         return handler.next(options);
       },
-      onError: (DioException e, handler) {
-        // Skip global 401 handling if the request explicitly asks to skip it (e.g., logout)
+      onError: (DioException e, handler) async {
+        // Fallback logic for connection issues
+        final isConnectionError = e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.sendTimeout ||
+            e.type == DioExceptionType.receiveTimeout ||
+            e.type == DioExceptionType.connectionError;
+
+        if (isConnectionError && _dio.options.baseUrl == ApiConfig.primaryBaseUrl) {
+          debugPrint('Primary backend (.71) unreachable. Trying fallback (.60)...');
+          _dio.options.baseUrl = ApiConfig.fallbackBaseUrl;
+          
+          final options = e.requestOptions;
+          options.baseUrl = ApiConfig.fallbackBaseUrl;
+          
+          try {
+            final response = await _dio.fetch(options);
+            return handler.resolve(response);
+          } on DioException catch (retryError) {
+            return handler.next(retryError);
+          } catch (err) {
+            return handler.next(e);
+          }
+        }
+
+        // Existing 401 handling
         final skipAuthHandler =
             e.requestOptions.extra['skipAuthHandler'] == true;
 
         if (e.response?.statusCode == 401 && !skipAuthHandler) {
-          // Trigger logout in AuthProvider to update UI immediately
           _authProvider.logout();
         }
         return handler.next(e);

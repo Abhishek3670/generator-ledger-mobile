@@ -58,6 +58,8 @@ class ProxyHandler(http.server.SimpleHTTPRequestHandler):
             self.send_response(e.code)
             self.send_header("Content-Type", e.headers.get("Content-Type", "application/json"))
             self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Cross-Origin-Opener-Policy", "same-origin")
+            self.send_header("Cross-Origin-Embedder-Policy", "require-corp")
             self.end_headers()
             self.wfile.write(resp_body)
         except Exception as e:
@@ -70,7 +72,19 @@ class ProxyHandler(http.server.SimpleHTTPRequestHandler):
         if self.path.startswith("/api/"):
             self._proxy("GET")
         else:
+            # Add headers for static files too
+            # Note: SimpleHTTPRequestHandler handles its own headers, 
+            # so we might need a more robust way to inject them, 
+            # but setting them here before super() sometimes works 
+            # depending on the Python version.
+            # However, the best way is to override end_headers.
             super().do_GET()
+
+    def end_headers(self):
+        self.send_header("Cross-Origin-Opener-Policy", "same-origin")
+        self.send_header("Cross-Origin-Embedder-Policy", "require-corp")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        super().end_headers()
 
     def do_POST(self):
         self._proxy("POST")
