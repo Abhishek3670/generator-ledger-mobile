@@ -4,6 +4,7 @@ Simple reverse-proxy server for Flutter web.
 - Serves static files from build/web/
 - Proxies /api/* requests to the backend API (avoids CORS issues)
 """
+
 import http.server
 import urllib.request
 import urllib.error
@@ -14,7 +15,6 @@ API_BACKEND = os.environ.get("API_BACKEND", "http://192.168.29.71:8000")
 WEB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "build", "web")
 PORT = int(os.environ.get("PORT", "8080"))
 
-
 class ProxyHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=WEB_DIR, **kwargs)
@@ -23,66 +23,63 @@ class ProxyHandler(http.server.SimpleHTTPRequestHandler):
         """Handle CORS preflight."""
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS")
+        self.send_header(
+            "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+        )
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         self.send_header("Access-Control-Max-Age", "600")
         self.end_headers()
 
     def _proxy(self, method):
-        url = f"{API_BACKEND}{self.path}"
+        backends = [
+            os.environ.get("API_BACKEND", "http://192.168.29.71:8000"),
+            "http://192.168.29.60:8001",
+        ]
+
         body = None
         if method in ("POST", "PUT", "PATCH"):
             length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(length) if length else None
 
-        # Forward relevant headers
         headers = {}
         for key in ("Content-Type", "Authorization", "Accept"):
             val = self.headers.get(key)
             if val:
                 headers[key] = val
 
-        req = urllib.request.Request(url, data=body, headers=headers, method=method)
-        try:
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                resp_body = resp.read()
-                self.send_response(resp.status)
-                for key, val in resp.getheaders():
-                    if key.lower() not in ("transfer-encoding", "connection"):
-                        self.send_header(key, val)
-                self.send_header("Access-Control-Allow-Origin", "*")
-                self.end_headers()
-                self.wfile.write(resp_body)
-        except urllib.error.HTTPError as e:
-            resp_body = e.read()
-            self.send_response(e.code)
-            self.send_header("Content-Type", e.headers.get("Content-Type", "application/json"))
-            self.send_header("Access-Control-Allow-Origin", "*")
-            self.send_header("Cross-Origin-Opener-Policy", "same-origin")
-            self.send_header("Cross-Origin-Embedder-Policy", "require-corp")
-            self.end_headers()
-            self.wfile.write(resp_body)
-        except Exception as e:
-            self.send_response(502)
-            self.send_header("Content-Type", "text/plain")
-            self.end_headers()
-            self.wfile.write(f"Proxy error: {e}".encode())
+        last_exception = None
+        for backend in backends:
+            url = f"{backend}{self.path}"
+            try:
+                req = urllib.request.Request(url, data=body, headers=headers, method=method)
+                with urllib.request.urlopen(req, timeout=5) as resp:
+                    resp_body = resp.read()
+                    self.send_response(resp.status)
+                    for key, val in resp.getheaders():
+                        if key.lower() not in ("transfer-encoding", "connection"):
+                            self.send_header(key, val)
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.end_headers()
+                    self.wfile.write(resp_body)
+                    return
+            except Exception as e:
+                last_exception = e
+                continue
+
+        self.send_response(502)
+        self.send_header("Content-Type", "text/plain")
+        self.end_headers()
+        self.wfile.write(
+            f"Proxy error: All backends failed. Last error: {last_exception}".encode()
+        )
 
     def do_GET(self):
         if self.path.startswith("/api/"):
             self._proxy("GET")
         else:
-            # Add headers for static files too
-            # Note: SimpleHTTPRequestHandler handles its own headers, 
-            # so we might need a more robust way to inject them, 
-            # but setting them here before super() sometimes works 
-            # depending on the Python version.
-            # However, the best way is to override end_headers.
             super().do_GET()
 
     def end_headers(self):
-        self.send_header("Cross-Origin-Opener-Policy", "same-origin")
-        self.send_header("Cross-Origin-Embedder-Policy", "require-corp")
         self.send_header("Access-Control-Allow-Origin", "*")
         super().end_headers()
 

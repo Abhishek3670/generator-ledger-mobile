@@ -1,20 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../generators/providers/generator_provider.dart';
 import '../../../core/models/generator.dart';
 import '../../../core/auth/permission_service.dart';
-import '../../generators/widgets/generator_form.dart';
+import 'add_genset_overlay.dart';
 
 class GensetCard extends StatelessWidget {
   final Generator generator;
+  final DateTime? selectedDate;
 
-  const GensetCard({super.key, required this.generator});
-
-  void _editGenerator(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => GeneratorForm(generator: generator),
-    );
-  }
+  const GensetCard({super.key, required this.generator, this.selectedDate});
 
   @override
   Widget build(BuildContext context) {
@@ -22,85 +17,137 @@ class GensetCard extends StatelessWidget {
     
     // Status colors
     Color statusColor;
+    Color statusBgColor;
     switch (generator.status.toLowerCase()) {
       case 'active':
-        statusColor = Colors.teal; // Emerald
+        statusColor = Colors.green.shade700;
+        statusBgColor = Colors.green.shade50;
         break;
       case 'maintenance':
-        statusColor = Colors.amber; // Amber
+        statusColor = Colors.orange.shade800;
+        statusBgColor = Colors.orange.shade50;
         break;
       default:
-        statusColor = Colors.redAccent; // Rose
+        statusColor = Colors.red.shade700;
+        statusBgColor = Colors.red.shade50;
     }
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    'ID: ${generator.id}',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.withOpacity(0.2)),
+      ),
+      color: Colors.white,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: canManage ? () => AddGensetOverlay.show(context, generator: generator) : null,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      generator.id,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: statusColor),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: statusBgColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      generator.status,
+                      style: TextStyle(color: statusColor, fontSize: 11, fontWeight: FontWeight.bold),
+                    ),
                   ),
-                  child: Text(
-                    generator.status.toUpperCase(),
-                    style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                if (canManage) ...[
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined, size: 20),
-                    onPressed: () => _editGenerator(context),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ]
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 24,
+                runSpacing: 12,
+                children: [
+                  _buildInfoItem('Capacity (kVA)', generator.capacity.toString()),
+                  _buildInfoItem('Type', generator.type),
+                  if (generator.identification.isNotEmpty)
+                    _buildInfoItem('Identification', generator.identification),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (generator.inventoryType.toLowerCase() == 'permanent' && generator.rentalVendorName != null) ...[
+                _buildInfoItem('Rental Vendor', generator.rentalVendorName!),
+                const SizedBox(height: 12),
               ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const Icon(Icons.bolt, size: 16, color: Colors.grey),
-                const SizedBox(width: 8),
-                Text(
-                  'Capacity: ${generator.capacity} kVA',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const Icon(Icons.category_outlined, size: 16, color: Colors.grey),
-                const SizedBox(width: 8),
-                Text(
-                  'Type: ${generator.type}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
-                ),
-              ],
-            ),
-          ],
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 1,
+                    child: generator.inventoryType.toLowerCase() == 'permanent'
+                        ? _buildInfoItem('Booking Status', 'N/A', valueColor: Colors.grey)
+                        : selectedDate == null 
+                            ? _buildInfoItem('Booking Status', '—', valueColor: Colors.grey)
+                            : FutureBuilder<Map<String, dynamic>>(
+                                future: context.read<GeneratorProvider>().getGeneratorBookings(
+                                  generator.id, 
+                                  "${selectedDate!.year}-${selectedDate!.month.toString().padLeft(2, '0')}-${selectedDate!.day.toString().padLeft(2, '0')}"
+                                ),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState == ConnectionState.waiting) {
+                                    return _buildInfoItem('Booking Status', 'Loading...');
+                                  }
+                                  if (snapshot.hasError) {
+                                    return _buildInfoItem('Booking Status', 'Error');
+                                  }
+                                  final data = snapshot.data;
+                                  final count = data?['count'] ?? 0;
+                                  return _buildInfoItem(
+                                    'Booking Status', 
+                                    count > 0 ? 'Booked' : 'Free',
+                                    valueColor: count > 0 ? Colors.orange.shade700 : Colors.green.shade700,
+                                  );
+                                },
+                              ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: _buildInfoItem('Notes', generator.notes?.isEmpty ?? true ? '—' : generator.notes!),
+                  ),
+                ],
+              )
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildInfoItem(String label, String value, {Color? valueColor}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: TextStyle(fontSize: 10, color: Colors.grey.shade500, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13, 
+            color: valueColor ?? Colors.black87,
+            fontWeight: valueColor != null ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ],
     );
   }
 }

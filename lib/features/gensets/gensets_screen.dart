@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../generators/providers/generator_provider.dart';
+import '../vendors/providers/vendor_provider.dart';
 import '../../core/auth/permission_service.dart';
 import '../../shared/widgets/state_widgets.dart';
-import '../../shared/widgets/search_bar.dart';
 import 'widgets/genset_card.dart';
-import '../generators/widgets/generator_form.dart';
+import 'widgets/genset_filter_bar.dart';
+import 'widgets/add_genset_overlay.dart';
+import '../../../core/models/generator.dart';
+import '../../../widgets/shared/corporate_app_bar.dart';
 
 class GensetsScreen extends StatefulWidget {
   const GensetsScreen({super.key});
@@ -15,37 +18,23 @@ class GensetsScreen extends StatefulWidget {
 }
 
 class _GensetsScreenState extends State<GensetsScreen> with SingleTickerProviderStateMixin {
+  DateTime? _selectedDate;
   late TabController _tabController;
-  final TextEditingController _searchController = TextEditingController();
-  final List<String> inventoryTypes = ['Retailer', 'Permanent', 'Emergency'];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _tabController.addListener(_handleTabChange);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<GeneratorProvider>().fetchGenerators();
+      context.read<VendorProvider>().ensureVendorsLoaded();
     });
-  }
-
-  void _handleTabChange() {
-    if (_tabController.indexIsChanging) {
-      _searchController.clear();
-      context.read<GeneratorProvider>().setSearchQuery('');
-    }
   }
 
   @override
   void dispose() {
-    _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
-    _searchController.dispose();
     super.dispose();
-  }
-
-  void _showAddDialog() {
-    showDialog(context: context, builder: (context) => const GeneratorForm());
   }
 
   @override
@@ -53,71 +42,183 @@ class _GensetsScreenState extends State<GensetsScreen> with SingleTickerProvider
     final canManage = context.read<PermissionService>().can('generator_management');
 
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight + 80),
-        child: Column(
-          children: [
-            DirectorySearchBar(
-              controller: _searchController,
-              hintText: 'Search gensets...',
-              onChanged: (value) => context.read<GeneratorProvider>().setSearchQuery(value),
-            ),
-            TabBar(
-              controller: _tabController,
-              tabs: const [Tab(text: 'Retailers'), Tab(text: 'Permanent'), Tab(text: 'Emergency')],
-              indicatorColor: Theme.of(context).colorScheme.primary,
-              labelColor: Theme.of(context).colorScheme.primary,
-              unselectedLabelColor: Colors.grey,
-            ),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: inventoryTypes.map((type) => _InventoryTypeView(inventoryType: type)).toList(),
+      backgroundColor: Colors.grey[50],
+      appBar: const CorporateAppBar(title: 'Generators'),
+      body: Consumer<GeneratorProvider>(
+        builder: (context, provider, child) {
+          if (provider.isLoading && provider.generators.isEmpty) {
+            return const LoadingState(message: 'Loading gensets...');
+          }
+          if (provider.error != null && provider.generators.isEmpty) {
+            return ErrorState(message: provider.error!, onRetry: () => provider.fetchGenerators());
+          }
+
+          final retailers = provider.generators.where((g) => g.inventoryType.toLowerCase() == 'retailer').toList();
+          final permanents = provider.generators.where((g) => g.inventoryType.toLowerCase() == 'permanent').toList();
+          final emergencies = provider.generators.where((g) => g.inventoryType.toLowerCase() == 'emergency').toList();
+
+          return Column(
+            children: [
+              GensetFilterBar(
+                selectedDate: _selectedDate,
+                onDateSelected: (date) {
+                  setState(() => _selectedDate = date);
+                },
+              ),
+              Container(
+                color: Colors.white,
+                child: TabBar(
+                  controller: _tabController,
+                  indicatorColor: Theme.of(context).colorScheme.primary,
+                  labelColor: Theme.of(context).colorScheme.primary,
+                  unselectedLabelColor: Colors.grey,
+                  tabs: const [
+                    Tab(text: 'Retailers'),
+                    Tab(text: 'Permanents'),
+                    Tab(text: 'Emergencies'),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _InventoryGroupView(
+                      subtitle: 'Gensets used for normal bookings and day-to-day retailer assignments.',
+                      generators: retailers,
+                      selectedDate: _selectedDate,
+                    ),
+                    _InventoryGroupView(
+                      subtitle: 'Gensets permanently parked at Rental Vendor properties.',
+                      generators: permanents,
+                      selectedDate: _selectedDate,
+                    ),
+                    _InventoryGroupView(
+                      subtitle: 'Backup gensets kept ready when any genset fails or for emergencies.',
+                      generators: emergencies,
+                      selectedDate: _selectedDate,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
       floatingActionButton: canManage
-          ? FloatingActionButton(onPressed: _showAddDialog, child: const Icon(Icons.add))
+          ? FloatingActionButton.extended(
+              onPressed: () => AddGensetOverlay.show(context),
+              backgroundColor: const Color(0xFF0F172A),
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: const Text('Add Genset', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+            )
           : null,
     );
   }
 }
 
-class _InventoryTypeView extends StatelessWidget {
-  final String inventoryType;
+class _InventoryGroupView extends StatefulWidget {
+  final String subtitle;
+  final List<Generator> generators;
+  final DateTime? selectedDate;
 
-  const _InventoryTypeView({required this.inventoryType});
+  const _InventoryGroupView({
+    required this.subtitle,
+    required this.generators,
+    this.selectedDate,
+  });
+
+  @override
+  State<_InventoryGroupView> createState() => _InventoryGroupViewState();
+}
+
+class _InventoryGroupViewState extends State<_InventoryGroupView> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<GeneratorProvider>(
-      builder: (context, provider, child) {
-        if (provider.isLoading && provider.generators.isEmpty) {
-          return const LoadingState(message: 'Loading gensets...');
-        }
-        if (provider.error != null && provider.generators.isEmpty) {
-          return ErrorState(message: provider.error!, onRetry: () => provider.fetchGenerators());
-        }
+    final filtered = widget.generators.where((g) {
+      if (_searchQuery.isEmpty) return true;
+      final query = _searchQuery.toLowerCase();
+      return g.id.toLowerCase().contains(query) ||
+             g.type.toLowerCase().contains(query) ||
+             g.status.toLowerCase().contains(query) ||
+             g.identification.toLowerCase().contains(query) ||
+             (g.notes?.toLowerCase().contains(query) ?? false) ||
+             (g.rentalVendorName?.toLowerCase().contains(query) ?? false);
+    }).toList();
 
-        final filtered = provider.generators.where(
-          (g) => g.inventoryType.toLowerCase() == inventoryType.toLowerCase()
-        ).toList();
-
-        if (filtered.isEmpty) {
-          return const EmptyState(message: 'No gensets found', subMessage: 'Try adjusting filters.');
-        }
-
-        return RefreshIndicator(
-          onRefresh: () => provider.fetchGenerators(),
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: filtered.length,
-            itemBuilder: (context, index) {
-              return GensetCard(generator: filtered[index]);
-            },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          color: Colors.white,
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(widget.subtitle, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                  ),
+                  Container(
+                    margin: const EdgeInsets.only(left: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Text(
+                      '${widget.generators.length} RECORDS',
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey.shade700),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _searchController,
+                onChanged: (val) => setState(() => _searchQuery = val),
+                decoration: InputDecoration(
+                  hintText: 'Search by ID, Type, Status, Vendor, Notes...',
+                  hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                  prefixIcon: Icon(Icons.search, color: Colors.grey.shade400),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary)),
+                  fillColor: Colors.white,
+                  filled: true,
+                ),
+              ),
+            ],
           ),
-        );
-      },
+        ),
+        Expanded(
+          child: filtered.isEmpty
+              ? const Center(child: Text('No gensets match your search.', style: TextStyle(color: Colors.grey)))
+              : RefreshIndicator(
+                  onRefresh: () => context.read<GeneratorProvider>().fetchGenerators(),
+                  child: ListView.builder(
+                    itemCount: filtered.length,
+                    padding: const EdgeInsets.only(top: 8, bottom: 80),
+                    itemBuilder: (context, index) => GensetCard(
+                      generator: filtered[index],
+                      selectedDate: widget.selectedDate,
+                    ),
+                  ),
+                ),
+        ),
+      ],
     );
   }
 }

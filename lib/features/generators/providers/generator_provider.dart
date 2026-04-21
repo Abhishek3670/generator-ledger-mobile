@@ -122,4 +122,8 @@ class GeneratorProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
   }
+
+  Future<Map<String, dynamic>> getGeneratorBookings(String id, String date) async {
+    return await _repository.getGeneratorBookings(id, date);
+  }
 }
