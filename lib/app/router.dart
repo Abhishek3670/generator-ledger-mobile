@@ -12,6 +12,7 @@ import '../features/bookings/booking_detail_screen.dart';
 import '../features/gensets/gensets_screen.dart';
 import '../features/vendors/vendors_list_screen.dart';
 import '../features/admin/admin_screen.dart';
+import '../features/bookings/create_booking_screen.dart';
 import 'app_scaffold.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -60,6 +61,10 @@ class AppRouter {
             GoRoute(
               path: '/history',
               builder: (context, state) => const HistoryScreen(),
+            ),
+            GoRoute(
+              path: '/create-booking',
+              builder: (context, state) => const CreateBookingScreen(),
             ),
             GoRoute(
               path: '/bookings',
