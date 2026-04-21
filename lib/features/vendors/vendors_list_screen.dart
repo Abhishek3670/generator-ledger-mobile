@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/models/vendor.dart';
 import '../../core/auth/permission_service.dart';
-import '../../shared/widgets/search_bar.dart';
 import '../../shared/widgets/state_widgets.dart';
+import '../../../widgets/shared/corporate_app_bar.dart';
 import 'providers/vendor_provider.dart';
-import 'widgets/vendor_form.dart';
+import 'widgets/vendor_card.dart';
+import 'widgets/add_vendor_overlay.dart';
 
 class VendorsListScreen extends StatefulWidget {
   const VendorsListScreen({super.key});
@@ -17,42 +18,22 @@ class VendorsListScreen extends StatefulWidget {
 class _VendorsListScreenState extends State<VendorsListScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _tabController.addListener(_handleTabChange);
-    _searchController.addListener(() => setState(() {}));
+    _tabController.addListener(() => setState(() {}));
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<VendorProvider>().fetchVendors();
       context.read<VendorProvider>().fetchRentalVendors();
     });
   }
 
-  void _handleTabChange() {
-    if (_tabController.indexIsChanging) {
-      _searchController.clear();
-      final provider = context.read<VendorProvider>();
-      provider.setVendorSearchQuery('');
-      provider.setRentalVendorSearchQuery('');
-    }
-  }
-
   @override
   void dispose() {
-    _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
-    _searchController.dispose();
     super.dispose();
-  }
-
-  void _showAddDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => VendorForm(isRental: _tabController.index == 1),
-    );
   }
 
   @override
@@ -61,334 +42,239 @@ class _VendorsListScreenState extends State<VendorsListScreen>
         context.read<PermissionService>().can('vendor_management');
 
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight + 80),
-        child: Column(
-          children: [
-            DirectorySearchBar(
-              controller: _searchController,
-              hintText: 'Search vendors...',
-              onChanged: (value) {
-                final provider = context.read<VendorProvider>();
-                if (_tabController.index == 0) {
-                  provider.setVendorSearchQuery(value);
-                } else {
-                  provider.setRentalVendorSearchQuery(value);
-                }
-              },
-            ),
-            TabBar(
-              controller: _tabController,
-              tabs: const [
-                Tab(text: 'Retailers'),
-                Tab(text: 'Rental Partners'),
-              ],
-              indicatorColor: Theme.of(context).colorScheme.primary,
-              labelColor: Theme.of(context).colorScheme.primary,
-              unselectedLabelColor: Colors.grey,
-            ),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: const [
-          _RetailerVendorsView(),
-          _RentalVendorsView(),
-        ],
+      backgroundColor: Colors.grey[50],
+      appBar: const CorporateAppBar(title: 'Vendors'),
+      body: Consumer<VendorProvider>(
+        builder: (context, provider, child) {
+          final retailers = provider.allVendors;
+          final rentals = provider.rentalVendors;
+
+          return Column(
+            children: [
+              Container(
+                color: Colors.white,
+                child: TabBar(
+                  controller: _tabController,
+                  indicatorColor: Theme.of(context).colorScheme.primary,
+                  labelColor: Theme.of(context).colorScheme.primary,
+                  unselectedLabelColor: Colors.grey,
+                  tabs: const [
+                    Tab(text: 'Retailer Vendor'),
+                    Tab(text: 'Rental Vendors'),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _InventoryGroupView(
+                      subtitle: 'Retail Vendor records of marriage functions or similar on site functions',
+                      vendors: retailers,
+                      isRental: false,
+                    ),
+                    _InventoryGroupView(
+                      subtitle: 'Rental Vendor records of marriage halls, guest houses, and hotels.',
+                      rentalVendors: rentals,
+                      isRental: true,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
       floatingActionButton: canManageVendors
-          ? FloatingActionButton(
-              onPressed: _showAddDialog,
-              child: const Icon(Icons.add),
+          ? FloatingActionButton.extended(
+              onPressed: () => AddVendorOverlay.show(
+                context,
+                isRental: _tabController.index == 1,
+              ),
+              backgroundColor: const Color(0xFF0F172A),
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: Text(
+                _tabController.index == 0 ? 'Add Retailer Vendor' : 'Add Rental Vendor',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+              ),
             )
           : null,
     );
   }
 }
 
-class _RetailerVendorsView extends StatelessWidget {
-  const _RetailerVendorsView();
+class _InventoryGroupView extends StatefulWidget {
+  final String subtitle;
+  final List<Vendor>? vendors;
+  final List<RentalVendor>? rentalVendors;
+  final bool isRental;
+
+  const _InventoryGroupView({
+    required this.subtitle,
+    this.vendors,
+    this.rentalVendors,
+    required this.isRental,
+  });
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<VendorProvider>(
-      builder: (context, provider, child) {
-        if (provider.isVendorsLoading && provider.vendors.isEmpty) {
-          return const LoadingState(message: 'Loading vendors...');
-        }
-        if (provider.vendorsError != null && provider.vendors.isEmpty) {
-          return ErrorState(
-            message: provider.vendorsError!,
-            onRetry: () => provider.fetchVendors(),
-          );
-        }
-        if (provider.vendors.isEmpty) {
-          return const EmptyState(
-            message: 'No vendors found',
-            subMessage: 'Try adding a new retailer.',
-          );
-        }
-        return RefreshIndicator(
-          onRefresh: () => provider.fetchVendors(),
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: provider.vendors.length,
-            itemBuilder: (context, index) {
-              return _VendorCardItem(vendor: provider.vendors[index]);
-            },
-          ),
-        );
-      },
-    );
-  }
+  State<_InventoryGroupView> createState() => _InventoryGroupViewState();
 }
 
-class _RentalVendorsView extends StatelessWidget {
-  const _RentalVendorsView();
+class _InventoryGroupViewState extends State<_InventoryGroupView> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<VendorProvider>(
-      builder: (context, provider, child) {
-        if (provider.isRentalVendorsLoading && provider.rentalVendors.isEmpty) {
-          return const LoadingState(message: 'Loading rental partners...');
-        }
-        if (provider.rentalVendorsError != null && provider.rentalVendors.isEmpty) {
-          return ErrorState(
-            message: provider.rentalVendorsError!,
-            onRetry: () => provider.fetchRentalVendors(),
-          );
-        }
-        if (provider.rentalVendors.isEmpty) {
-          return const EmptyState(
-            message: 'No rental partners found',
-            subMessage: 'Try adding a new partner.',
-          );
-        }
-        return RefreshIndicator(
-          onRefresh: () => provider.fetchRentalVendors(),
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: provider.rentalVendors.length,
-            itemBuilder: (context, index) {
-              return _RentalVendorCardItem(vendor: provider.rentalVendors[index]);
-            },
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _VendorCardItem extends StatelessWidget {
-  final Vendor vendor;
-
-  const _VendorCardItem({required this.vendor});
-
-  void _editVendor(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => VendorForm(vendor: vendor),
-    );
-  }
-
-  void _confirmDelete(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Vendor'),
-        content: Text('Are you sure you want to delete ${vendor.name}?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () async {
-              try {
-                final provider = context.read<VendorProvider>();
-                await provider.deleteVendor(vendor.id);
-                if (context.mounted) Navigator.pop(context);
-              } catch (e) {
-                if (context.mounted) Navigator.pop(context);
-              }
-            },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final canManage = context.read<PermissionService>().can('vendor_management');
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    vendor.name,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+    final provider = context.watch<VendorProvider>();
+    
+    final isLoading = widget.isRental ? provider.isRentalVendorsLoading : provider.isVendorsLoading;
+    final error = widget.isRental ? provider.rentalVendorsError : provider.vendorsError;
+    final totalCount = widget.isRental ? (widget.rentalVendors?.length ?? 0) : (widget.vendors?.length ?? 0);
+
+    List<dynamic> filtered = [];
+    if (widget.isRental) {
+      filtered = (widget.rentalVendors ?? []).where((v) {
+        if (_searchQuery.isEmpty) return true;
+        final query = _searchQuery.toLowerCase();
+        return v.rentalVendorId.toLowerCase().contains(query) ||
+            v.name.toLowerCase().contains(query) ||
+            v.place.toLowerCase().contains(query) ||
+            v.phone.contains(query);
+      }).toList();
+    } else {
+      filtered = (widget.vendors ?? []).where((v) {
+        if (_searchQuery.isEmpty) return true;
+        final query = _searchQuery.toLowerCase();
+        return v.id.toLowerCase().contains(query) ||
+            v.name.toLowerCase().contains(query) ||
+            v.place.toLowerCase().contains(query) ||
+            v.phone.contains(query);
+      }).toList();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          color: Colors.white,
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.subtitle,
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    ),
                   ),
-                ),
-                if (canManage) ...[
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined, size: 20),
-                    onPressed: () => _editVendor(context),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  const SizedBox(width: 16),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, size: 20, color: Colors.redAccent),
-                    onPressed: () => _confirmDelete(context),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+                  Container(
+                    margin: const EdgeInsets.only(left: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Text(
+                      '$totalCount RECORDS',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
                   ),
                 ],
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                const Icon(Icons.location_on_outlined, size: 16, color: Colors.grey),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    vendor.place,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _searchController,
+                onChanged: (val) => setState(() => _searchQuery = val),
+                decoration: InputDecoration(
+                  hintText: widget.isRental 
+                      ? 'Search by Rental ID, Property, Place, Phone...'
+                      : 'Search by Vendor ID, Name, Place, Phone...',
+                  hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                  prefixIcon: Icon(Icons.search, color: Colors.grey.shade400),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
                   ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
+                  ),
+                  fillColor: Colors.white,
+                  filled: true,
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.phone_outlined, size: 16, color: Colors.grey),
-                const SizedBox(width: 8),
-                Text(
-                  vendor.phone,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RentalVendorCardItem extends StatelessWidget {
-  final RentalVendor vendor;
-
-  const _RentalVendorCardItem({required this.vendor});
-
-  void _editVendor(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => VendorForm(rentalVendor: vendor, isRental: true),
-    );
-  }
-
-  void _confirmDelete(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Rental Partner'),
-        content: Text('Are you sure you want to delete ${vendor.name}?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () async {
-              try {
-                final provider = context.read<VendorProvider>();
-                await provider.deleteRentalVendor(vendor.rentalVendorId);
-                if (context.mounted) Navigator.pop(context);
-              } catch (e) {
-                if (context.mounted) Navigator.pop(context);
-              }
-            },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final canManage = context.read<PermissionService>().can('vendor_management');
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    vendor.name,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                if (canManage) ...[
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined, size: 20),
-                    onPressed: () => _editVendor(context),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  const SizedBox(width: 16),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, size: 20, color: Colors.redAccent),
-                    onPressed: () => _confirmDelete(context),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                const Icon(Icons.location_on_outlined, size: 16, color: Colors.grey),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    vendor.place,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.phone_outlined, size: 16, color: Colors.grey),
-                const SizedBox(width: 8),
-                Text(
-                  vendor.phone,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
-                ),
-              ],
-            ),
-          ],
         ),
-      ),
+        Expanded(
+          child: Builder(
+            builder: (context) {
+              if (isLoading && totalCount == 0) {
+                return const LoadingState(message: 'Loading vendors...');
+              }
+              if (error != null && totalCount == 0) {
+                return ErrorState(
+                  message: error,
+                  onRetry: () => widget.isRental
+                      ? provider.fetchRentalVendors()
+                      : provider.fetchVendors(),
+                );
+              }
+              if (totalCount == 0) {
+                return EmptyState(
+                  message: 'No vendors found',
+                  subMessage: 'Try adding a new vendor.',
+                );
+              }
+              if (filtered.isEmpty) {
+                return const Center(
+                  child: Text(
+                    'No vendors match your search.',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                );
+              }
+
+              return RefreshIndicator(
+                onRefresh: () => widget.isRental
+                    ? provider.fetchRentalVendors()
+                    : provider.fetchVendors(),
+                child: ListView.builder(
+                  itemCount: filtered.length,
+                  padding: const EdgeInsets.only(top: 8, bottom: 80),
+                  itemBuilder: (context, index) {
+                    final item = filtered[index];
+                    if (widget.isRental) {
+                      return VendorCard(rentalVendor: item);
+                    } else {
+                      return VendorCard(vendor: item);
+                    }
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

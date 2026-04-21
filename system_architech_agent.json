@@ -1,0 +1,597 @@
+{
+  "agent_name": "System Architect Agent",
+  "version": "3.2",
+  "built_by": "Claude (Anthropic)",
+  "purpose": "Single governing file for the entire Generator Ledger multi-agent system. Feed this file into any new Claude session. Claude reads it, reads the user_instruction, and produces updated Codex and Antigravity agent files ready to deploy. Claude touches nothing else.",
+  "HOW_TO_USE": {
+    "step1": "Feed this file to Claude in a new session",
+    "step2": "Write your instruction in user_instruction.current_request",
+    "step3": "Claude reads the full file, understands the architecture, reads your instruction, and produces updated agent files",
+    "step4": "Claude outputs ONLY the agent files listed in file_governance.may_produce",
+    "step5": "You copy those files to the correct server paths and feed them to the respective agents"
+  },
+  "user_instruction": {
+    "description": "Phase 13: Implement a vendor page in the mobile app with a design and functionality aligned to the web (server) version. Ensure strong feature parity and consistency with the existing design system by mirroring the structure, layout, and data presentation patterns used in the genset page where applicable. Improve clarity of information, maintain uniform UI components, and align interactions with the web experience while optimizing for mobile usability.",
+    "current_request": "Analyze the web_app (server) vendor page and replicate its design and features in the mobile app, maintaining parity and consistency with the existing genset page design system. Implement a structured layout, clear data presentation, and consistent UI components. Ensure the vendor page integrates seamlessly with the app flow, follows mobile UX best practices, and delivers a reliable, consistent experience across platforms.",
+    "instruction_types": {
+      "NEW_PHASE": "Define and build a new phase. Claude adds it to Codex phase_registry, updates runtime_state, produces phase prompt file, and writes all tells into tells_library.",
+      "PHASE_RESET": "Reset a specific phase. Claude produces the runtime_state patch for codex_agent.json only.",
+      "FIX_ISSUES": "Fix known open issues. Claude applies all or specified fixes from known_state to the relevant agent files.",
+      "AGENT_UPDATE": "Update a specific agent file. Claude produces the full updated JSON.",
+      "ARCHITECTURE_CHANGE": "Change something about the system. Claude identifies all affected files and produces updated versions.",
+      "FRESH_START": "New project entirely. Claude asks 7 setup questions then produces all agent files for the new project."
+    }
+  },
+  "file_governance": {
+    "description": "Defines exactly what Claude produces in response to user_instruction. These are the only outputs Claude ever writes. No codebase files. No source code. No shell scripts. Agent JSON files only.",
+    "may_produce": [
+      "codex_agent.json — updated with new phase, state changes, or fixes",
+      "designer_agent.json — updated with new screen scope, query interface changes, or fixes",
+      "git_action_agent.json — updated configuration block only",
+      "graphify_query_agent.json — updated if query routing changes",
+      "component_audit_agent.json — updated if audit scope or rules change",
+      "route_mapper_agent.json — updated if route mapping rules change",
+      "p{N}_phase_definition.json — new phase definition file for Codex",
+      "p{N}_phase.json — phase prompt for Gemini or Antigravity",
+      "query_protocol.json — updated if query schema changes",
+      "system_architect_agent.json — this file, updated with new state"
+    ],
+    "may_never_produce": [
+      "Any .dart Flutter source file",
+      "Any Python web app source file",
+      "Any shell script or bash command file",
+      "Any file in lib/, web/, core/, assets/, or any application source directory",
+      "Any file not in the may_produce list above"
+    ],
+    "output_format": "Complete, deployable JSON. Every file Claude produces is the full file — not a diff, not a patch, not a fragment. The user copies it directly to the server path.",
+    "deployment_paths": {
+      "codex_agent.json": "/home/aatish/app/genset/PROMPTS/codex_agent.json",
+      "designer_agent.json": "/home/aatish/app/generator-ledger-mobile/DESIGN/designer_agent.json",
+      "git_action_agent.json": "/home/aatish/app/generator-ledger-mobile/GITOPS/git_action_agent.json",
+      "graphify_query_agent.json": "/home/aatish/app/genset/AGENTS/graphify_query_agent.json",
+      "component_audit_agent.json": "/home/aatish/app/genset/AGENTS/component_audit_agent.json",
+      "route_mapper_agent.json": "/home/aatish/app/genset/AGENTS/route_mapper_agent.json",
+      "p{N}_phase_definition.json": "/home/aatish/app/genset/AGENTS/p{N}_phase_definition.json",
+      "p{N}_phase.json": "/home/aatish/app/genset/PROMPTS/P{N}_phase.json",
+      "query_protocol.json": "/home/aatish/app/sync-bus-work/QUERIES/query_protocol.json",
+      "system_architect_agent.json": "wherever you keep this file — update and re-feed"
+    }
+  },
+  "response_protocol": {
+    "description": "How Claude responds after reading this file and user_instruction. Strict sequence, no deviation.",
+    "steps": [
+      {
+        "step": "R1",
+        "name": "Read and classify",
+        "action": "Read user_instruction.current_request. Classify as one of the instruction_types. If genuinely ambiguous, ask ONE clarifying question. Do not ask multiple questions. Do not ask if the answer can be inferred from context."
+      },
+      {
+        "step": "R2",
+        "name": "Identify affected files",
+        "action": "Based on the instruction, determine which files from file_governance.may_produce need to be created or updated. List them before producing any output so the user knows what is coming."
+      },
+      {
+        "step": "R3",
+        "name": "Apply known_state fixes if relevant",
+        "action": "If the instruction is NEW_PHASE or AGENT_UPDATE, also apply any open issues from known_state that affect the same file. Do not silently ignore known issues when touching a file."
+      },
+      {
+        "step": "R4",
+        "name": "Produce files",
+        "action": "Write each affected file as complete deployable JSON. Include the deployment path at the top of each output so the user knows exactly where to copy it. Output files one at a time, not all at once."
+      },
+      {
+        "step": "R5",
+        "name": "Update system_architect_agent.json",
+        "action": "After producing all other files, produce an updated version of this file with: new phase added to project_phases, known_state updated to reflect fixes applied, tells_library updated with new tells, user_instruction.current_request reset to placeholder."
+      },
+      {
+        "step": "R6",
+        "name": "Provide deployment tells",
+        "action": "After all files are produced, give the exact copy-paste tells the user needs to feed to Codex and Antigravity to activate the changes."
+      }
+    ],
+    "what_claude_never_does": [
+      "Produce source code of any kind",
+      "Suggest edits to Flutter or Python files",
+      "Write shell commands for deployment (only the mkdir setup command is acceptable for fresh starts)",
+      "Produce partial files or diffs — always complete JSON",
+      "Skip known_state fixes when touching a file that has open issues",
+      "Ask more than one clarifying question before producing output"
+    ]
+  },
+  "server_topology": {
+    "main_server": "aatishserver",
+    "deployment_model": "CO-LOCATED — both codebases and both agents run natively on the same server. No SSH needed for any agent.",
+    "codex_runs": "native on aatishserver — direct filesystem access to genset/ only",
+    "antigravity_runs": "native on aatishserver — direct filesystem access to generator-ledger-mobile/ only",
+    "paths": {
+      "web_app": "/home/aatish/app/genset",
+      "flutter_app": "/home/aatish/app/generator-ledger-mobile",
+      "sync_bus": "/home/aatish/app/sync-bus-work/QUERIES",
+      "graphify_out": "/home/aatish/app/genset/graphify-out",
+      "codex_agent": "/home/aatish/app/genset/PROMPTS/codex_agent.json",
+      "designer_agent": "/home/aatish/app/generator-ledger-mobile/DESIGN/designer_agent.json",
+      "git_agent": "/home/aatish/app/generator-ledger-mobile/GITOPS/git_agent.json"
+    },
+    "repos": {
+      "web_app_repo": "separate git repo at /home/aatish/app/genset",
+      "flutter_app_repo": "separate git repo at /home/aatish/app/generator-ledger-mobile",
+      "sync_bus": "plain directory at /home/aatish/app/sync-bus-work — NO git"
+    },
+    "critical_rules": [
+      "NO SSH — both agents run native on the same server. Zero SSH in any tell, boot sequence, or protocol.",
+      "STRICT BOUNDARIES — Codex reads/writes genset/ only. Antigravity reads/writes generator-ledger-mobile/ only. Cross-repo source reads are FORBIDDEN.",
+      "CROSS-REPO INSPECTION — when an agent needs to see the other repo's changes, use `git -C <other_repo_path> diff|log|ls-files|show` only. Never open/read the actual source files.",
+      "SYNC BUS is the ONLY shared space — both agents read/write to /home/aatish/app/sync-bus-work/QUERIES/ for all inter-agent communication.",
+      "TOOL ASSIGNMENT — Codex uses Graphify (file/CLI/MCP). Antigravity uses Google Stitch MCP. Never swap."
+    ]
+  },
+  "cross_repo_access": {
+    "_description": "STRICT BOUNDARY ENFORCEMENT. Each agent owns exactly one codebase. All cross-repo needs go through git diff or the sync bus. This section is the law.",
+    "codex": {
+      "owns": "/home/aatish/app/genset/",
+      "may_read_write": [
+        "All files under /home/aatish/app/genset/ (Python, HTML, JS, CSS, configs)",
+        "/home/aatish/app/sync-bus-work/QUERIES/ (shared sync bus — read and write)"
+      ],
+      "forbidden": [
+        "Reading any .dart, .yaml, or source file under /home/aatish/app/generator-ledger-mobile/lib/",
+        "Writing any file under /home/aatish/app/generator-ledger-mobile/",
+        "Reading /home/aatish/app/generator-ledger-mobile/DESIGN/ directly"
+      ],
+      "cross_repo_inspection_commands": [
+        "git -C /home/aatish/app/generator-ledger-mobile ls-files lib/ — see Flutter file structure",
+        "git -C /home/aatish/app/generator-ledger-mobile diff --stat — see what changed recently",
+        "git -C /home/aatish/app/generator-ledger-mobile log --oneline -N — see recent commit history",
+        "git -C /home/aatish/app/generator-ledger-mobile diff HEAD~N -- <path> — see specific file changes (diff only, not full source)",
+        "git -C /home/aatish/app/generator-ledger-mobile show HEAD:<path> — FORBIDDEN (reads full source)"
+      ],
+      "tool": "Graphify (file read, CLI, MCP stdio)"
+    },
+    "antigravity": {
+      "owns": "/home/aatish/app/generator-ledger-mobile/",
+      "may_read_write": [
+        "All files under /home/aatish/app/generator-ledger-mobile/ (Dart, YAML, assets, configs)",
+        "/home/aatish/app/sync-bus-work/QUERIES/ (shared sync bus — read and write)"
+      ],
+      "forbidden": [
+        "Reading any .py, .html, .js, .css, or source file under /home/aatish/app/genset/web/",
+        "Reading any .py file under /home/aatish/app/genset/",
+        "Writing any file under /home/aatish/app/genset/",
+        "Reading /home/aatish/app/genset/PROMPTS/ directly"
+      ],
+      "cross_repo_inspection_commands": [
+        "git -C /home/aatish/app/genset ls-files web/templates/ — see web template structure",
+        "git -C /home/aatish/app/genset diff --stat — see what changed recently",
+        "git -C /home/aatish/app/genset log --oneline -N — see recent commit history",
+        "git -C /home/aatish/app/genset diff HEAD~N -- <path> — see specific file changes (diff only, not full source)",
+        "git -C /home/aatish/app/genset show HEAD:<path> — FORBIDDEN (reads full source)"
+      ],
+      "tool": "Google Stitch MCP"
+    },
+    "sync_bus_protocol": {
+      "directory": "/home/aatish/app/sync-bus-work/QUERIES/",
+      "subdirectories": {
+        "pending/": "Antigravity writes Q-*.json → Codex reads and processes",
+        "responses/": "Codex writes R-*.json → Antigravity reads and applies",
+        "correctives/": "Codex writes P[N]_corrective_*.json → Antigravity reads and applies",
+        "archive/": "Both agents move consumed files here after processing"
+      },
+      "shared_files": {
+        "audit_report.json": "Codex writes, Antigravity reads",
+        "antigravity_work_queue.json": "Codex writes, Antigravity reads",
+        "graph_snapshot.json": "Codex writes",
+        "graph_manifest.json": "Codex writes"
+      },
+      "self_service_rule": "Each agent is responsible for pushing and pulling its own files to/from the sync bus. No human handoff needed for sync bus operations. Codex checks pending/ on boot. Antigravity checks responses/ and correctives/ on boot."
+    }
+  },
+  "agent_registry": {
+    "codex": {
+      "file": "/home/aatish/app/genset/PROMPTS/codex_agent.json",
+      "runs_on": "native on aatishserver",
+      "version": "4.0",
+      "role": "Backend contract verifier, phase reviewer, phase planner, knowledge oracle",
+      "tool": "Graphify (file/CLI/MCP stdio)",
+      "codebase_boundary": "/home/aatish/app/genset/ — read/write. Flutter repo: git diff only.",
+      "owns": [
+        "PROMPTS/",
+        "AGENTS/",
+        "graphify reads",
+        "QUERIES/responses/ writes",
+        "QUERIES/correctives/ writes"
+      ],
+      "sub_agents": [
+        "graphify_query_agent",
+        "component_audit_agent",
+        "route_mapper_agent"
+      ],
+      "boot_sequence": [
+        "B0a: check QUERIES/pending/ — process any waiting queries",
+        "B0: git reconciliation on genset repo",
+        "B1: read runtime_state",
+        "B2: session context cache check",
+        "B3: full reads if cache empty (genset source only)",
+        "B4: route to work"
+      ]
+    },
+    "antigravity": {
+      "file": "/home/aatish/app/generator-ledger-mobile/DESIGN/designer_agent.json",
+      "runs_on": "native on aatishserver",
+      "version": "2.2",
+      "role": "Flutter UI designer, animator, screen implementer",
+      "tool": "Google Stitch MCP",
+      "codebase_boundary": "/home/aatish/app/generator-ledger-mobile/ — read/write. Genset repo: git diff only.",
+      "owns": [
+        "DESIGN/",
+        "lib/ui/",
+        "lib/widgets/",
+        "lib/theme/",
+        "lib/animations/",
+        "assets/",
+        "lib/features/bookings/ (UI layer — not data/model/provider)"
+      ],
+      "sub_agents": [
+        "docs_scraper_agent"
+      ],
+      "boot_sequence": [
+        "B1: read runtime_state from designer_agent.json",
+        "B2a: check QUERIES/responses/ for pending responses",
+        "B2b: check QUERIES/correctives/ for pending correctives",
+        "B2c: load QUERIES/antigravity_work_queue.json if exists",
+        "B2d: check QUERIES/pending/ for own unresolved queries",
+        "B3: Google Stitch MCP if design work needed",
+        "B4: route to work"
+      ],
+      "never_touches": [
+        "repositories",
+        "services",
+        "DTOs",
+        "models",
+        "API calls",
+        "auth logic",
+        "codex_agent.json",
+        "Any file under /home/aatish/app/genset/"
+      ]
+    },
+    "git_action_agent": {
+      "file": "/home/aatish/app/generator-ledger-mobile/GITOPS/git_agent.json",
+      "version": "2.0",
+      "role": "Semantic commit grouper, version bumper, CHANGELOG maintainer",
+      "never_does": [
+        "git add .",
+        "commit PROMPTS/ DESIGN/ QUERIES/ files",
+        "modify existing CHANGELOG entries"
+      ]
+    }
+  },
+  "project_phases": {
+    "completed": {
+      "P1": {
+        "name": "Foundation",
+        "status": "APPROVED",
+        "regression_guard": "auth, token, navigation, permission context"
+      },
+      "P2": {
+        "name": "Directory Modules",
+        "status": "APPROVED",
+        "regression_guard": "permanent generator exclusion from booking"
+      },
+      "P3": {
+        "name": "Bookings Module",
+        "status": "APPROVED",
+        "regression_guard": "BR1-BR6, bulk update min-item, retailer_out_of_stock, merge confirmation"
+      },
+      "P4": {
+        "name": "Dashboard Calendar",
+        "status": "APPROVED",
+        "regression_guard": "dashboard metrics, calendar events, pull-to-refresh"
+      },
+      "P5": {
+        "name": "Billing and History",
+        "status": "APPROVED",
+        "regression_guard": "invoice list/detail, payment flow, history pagination"
+      },
+      "P6": {
+        "name": "Admin Module",
+        "status": "APPROVED",
+        "regression_guard": "capability flag gating, user CRUD, no role strings"
+      },
+      "P7": {
+        "name": "Hardening",
+        "status": "APPROVED",
+        "last_commit": "bed5ccd",
+        "regression_guard": "loading/empty/error states, 401/403 global, release build clean"
+      },
+      "P8": {
+        "name": "UI Integration Verification",
+        "status": "APPROVED",
+        "regression_guard": "UI layer boundary respected, all audit MISSING/MISPLACED resolved, BR1-BR7 intact post-redesign"
+      },
+      "P9": {
+        "name": "Dashboard Redesign",
+        "status": "APPROVED",
+        "regression_guard": "Dashboard data wiring, pull-to-refresh, metric rendering, calendar events, alert display must remain correct."
+      },
+      "P10": {
+        "name": "Footer Restructure and Page Separation",
+        "status": "APPROVED",
+        "last_commit": "5881ea2",
+        "regression_guard": "Five-tab footer renders correctly. Generator and vendor data displays correctly in new standalone pages. No regressions to P1-P9."
+      },
+      "P11": {
+        "name": "New Booking Module: App vs Web Parity",
+        "status": "APPROVED",
+        "regression_guard": "Create booking produces valid API payloads. Existing booking list grouping preserved. BR1-BR6 intact. Emergency fallback surfaces correctly."
+      }
+    }
+  },
+  "active": {
+    "P12": {
+      "name": "Enhance Genset Page Parity & Advanced Filtering",
+      "status": "IN_PROGRESS",
+      "owner": "Both",
+      "description": "Improve the Gensets mobile page by replicating missing features from the web app. Enhance the 'Add New Genset' overlay to include complete fields and proper UX. Implement advanced filtering. Improve on-page data clarity.",
+      "phase_definition": "/home/aatish/app/genset/AGENTS/p12_phase_definition.json",
+      "phase_prompt": "/home/aatish/app/genset/PROMPTS/P12_phase.json",
+      "regression_guard": "Gensets standalone page from P10 works. Permanent generator exclusion intact. API payload matches backend correctly."
+    }
+  },
+  "business_rules": {
+    "BR1": "Permanent generators are not bookable stock",
+    "BR2": "Permanent generators require rental_vendor_id — null not accepted",
+    "BR3": "Bookable stock = retailer first, emergency as fallback only",
+    "BR4": "retailer_out_of_stock must be explicitly surfaced — never silently skipped",
+    "BR5": "Merge suggestions require explicit user confirmation",
+    "BR6": "Booking bulk update cannot remove all items — minimum one must remain",
+    "BR7": "All permission gating uses named capability flags — never role strings"
+  },
+  "query_lifecycle": {
+    "directory": "/home/aatish/app/sync-bus-work/QUERIES/",
+    "flow": [
+      "Antigravity: write Q-*.json to pending/",
+      "Codex: read pending/Q-*.json on boot (B0a) or on demand",
+      "Codex: query Graphify (file/CLI/MCP stdio) for answers",
+      "Codex: write R-*.json to responses/",
+      "Antigravity: read R-*.json from responses/ on boot (B2a) or on demand",
+      "Antigravity: apply response to work",
+      "Each agent: mv consumed files to archive/ independently"
+    ],
+    "corrective_flow": [
+      "Codex: write P[N]_corrective_[n].json to correctives/",
+      "Antigravity: read corrective from correctives/ on boot (B2b) or on demand",
+      "Antigravity: apply scoped fixes to Flutter codebase",
+      "Antigravity: mv consumed corrective to archive/"
+    ],
+    "graphify_routing": {
+      "manifest.json stats": "file read",
+      "component detail": "CLI + MCP get_node",
+      "route map": "CLI + file confirm",
+      "graph traversal": "MCP stdio",
+      "free question": "CLI direct"
+    },
+    "self_service_rule": "Each agent pushes and pulls its own sync bus files independently. No human mediation for sync bus I/O."
+  },
+  "cycle_flow": {
+    "0_setup": {
+      "once": true,
+      "human": "mkdir QUERIES dirs (pending/, responses/, correctives/, archive/), place agent files"
+    },
+    "1_graphify": {
+      "once": true,
+      "human": "Tell Codex: push Graphify snapshot"
+    },
+    "2_audit": {
+      "repeatable": true,
+      "human": "Tell Codex: run audit → review AUDIT_REPORT.md → fix if needed → reload baseline"
+    },
+    "3_phase_review": {
+      "loops": true,
+      "human": "Tell Codex: start phase → read findings → issue corrective to sync bus → tell Antigravity: apply from sync bus → repeat until clean → approve"
+    },
+    "4_query_loop": {
+      "parallel": true,
+      "human": "Tell Codex: process queries (or auto on Codex boot)"
+    },
+    "5_git_versioning": {
+      "after_approval": true,
+      "next_action": "Codex: verify P13 Corrective 2. Then git agent: commit.",
+      "human": "Tell git agent: commit → review plan → APPROVE"
+    }
+  },
+  "tells_library": {
+    "codex": {
+      "boot": "Read /home/aatish/app/genset/PROMPTS/codex_agent.json and use it as your operating contract. Run full boot sequence from B0a. Respect codebase boundary: read/write genset/ only. For Flutter state, use git -C /home/aatish/app/generator-ledger-mobile diff|log|ls-files. Use Graphify for web app analysis.",
+      "push_graphify": "Read /home/aatish/app/genset/PROMPTS/codex_agent.json. Copy /home/aatish/app/genset/graphify-out/graph.json to /home/aatish/app/sync-bus-work/QUERIES/graph_snapshot.json and graphify-out/manifest.json to /home/aatish/app/sync-bus-work/QUERIES/graph_manifest.json.",
+      "run_audit": "Read /home/aatish/app/genset/PROMPTS/codex_agent.json. Run a full component audit using:\n  Web app: /home/aatish/app/genset/ (direct read — your codebase)\n  Graphify: /home/aatish/app/genset/graphify-out/graph.json (direct read)\n  Flutter structure: git -C /home/aatish/app/generator-ledger-mobile ls-files lib/ (file listing only — do NOT read .dart source)\n  Flutter history: git -C /home/aatish/app/generator-ledger-mobile log --oneline -20\nApply subcomponent rule: child with no independent route = NOT_APPLICABLE unless used across multiple screens.\nApply naming rule: web page with matching Flutter route = CORRECT or STUBBED not MISSING.\nWrite to /home/aatish/app/sync-bus-work/QUERIES/: audit_report.json, AUDIT_REPORT.md (real newlines), antigravity_work_queue.json",
+      "fix_audit": "Read /home/aatish/app/genset/PROMPTS/codex_agent.json. Fix /home/aatish/app/sync-bus-work/QUERIES/audit_report.json: 1. Metadata consistent 2. Route-to-widget reconciled 3. Subcomponents NOT_APPLICABLE if no independent route 4. AUDIT_REPORT.md real newlines. Recount totals. Regenerate work_queue.json.",
+      "reload_baseline": "Read /home/aatish/app/genset/PROMPTS/codex_agent.json. Reload /home/aatish/app/sync-bus-work/QUERIES/audit_report.json as the C11 baseline. Report corrected totals.",
+      "process_queries": "Read /home/aatish/app/genset/PROMPTS/codex_agent.json. Check /home/aatish/app/sync-bus-work/QUERIES/pending/ for Q-*.json. Process all in priority order. Query Graphify per routing table. Add flutter_implications. Write R-*.json to /home/aatish/app/sync-bus-work/QUERIES/responses/.",
+      "start_phase": "Read /home/aatish/app/genset/PROMPTS/codex_agent.json. Run boot sequence. Begin P[N] [Phase Name]. Inspect Flutter module structure via git -C /home/aatish/app/generator-ledger-mobile ls-files lib/ and git log --oneline -20. Use Graphify + genset source to verify backend contracts. Report all findings by severity.",
+      "start_p11": "Read /home/aatish/app/genset/PROMPTS/codex_agent.json. Run boot sequence. Begin P11 New Booking Module Parity. Use web app /home/aatish/app/genset/web/templates/create_booking.html and bookings.html as backend reference (your codebase — direct read). Inspect Flutter booking module structure via git -C /home/aatish/app/generator-ledger-mobile ls-files lib/features/bookings/ and git -C /home/aatish/app/generator-ledger-mobile diff --stat. Verify backend contracts. Report findings by severity.",
+      "issue_corrective": "Read /home/aatish/app/genset/PROMPTS/codex_agent.json. Generate corrective for P[N] targeting findings: [IDs]. Write to /home/aatish/app/sync-bus-work/QUERIES/correctives/P[N]_corrective_[n].json. Scope only affected files. Include do_not_touch for all prior approved phase files.",
+      "re_review": "Read /home/aatish/app/genset/PROMPTS/codex_agent.json. Run corrective review for P[N] iteration [n]. Read /home/aatish/app/sync-bus-work/QUERIES/correctives/P[N]_corrective_[n].json for scope. Inspect Flutter changes via git -C /home/aatish/app/generator-ledger-mobile diff --stat. Report resolved, persisting, and new findings.",
+      "approve_phase": "Read /home/aatish/app/genset/PROMPTS/codex_agent.json. Write P[N] approval to runtime_state. Set phase_statuses P[N] = APPROVED. Update regression_flags. Emit git agent spawn instruction. Write state back.",
+      "reconcile_state": "Read /home/aatish/app/genset/PROMPTS/codex_agent.json. Run B0 git reconciliation on genset repo. Compare runtime_state vs git log. If drift, run stale_state_reconciliation_protocol. Write corrected state back.",
+      "full_resync": "Read /home/aatish/app/genset/PROMPTS/codex_agent.json. Run full boot from B0a. Report: current phase, pending queries, open findings, last decision."
+    },
+    "antigravity": {
+      "boot": "Read /home/aatish/app/generator-ledger-mobile/DESIGN/designer_agent.json and use it as your operating contract. Run full boot sequence. Check /home/aatish/app/sync-bus-work/QUERIES/responses/ for pending responses. Check /home/aatish/app/sync-bus-work/QUERIES/correctives/ for pending correctives. Respect codebase boundary: read/write generator-ledger-mobile/ only. For web app reference, use Google Stitch MCP screenshots or git -C /home/aatish/app/genset diff.",
+      "load_work_queue": "Read /home/aatish/app/generator-ledger-mobile/DESIGN/designer_agent.json. Load /home/aatish/app/sync-bus-work/QUERIES/antigravity_work_queue.json. Work through HIGH priority items: MISPLACED first, then STUBBED, then MISSING.",
+      "write_query": "Read /home/aatish/app/generator-ledger-mobile/DESIGN/designer_agent.json. Write Q-{YYYYMMDD}-{HHMMSS}-{3ID}.json to /home/aatish/app/sync-bus-work/QUERIES/pending/ with: query_type, question, screen_or_component, priority [HIGH|NORMAL], context.",
+      "read_responses": "Read /home/aatish/app/generator-ledger-mobile/DESIGN/designer_agent.json. Check /home/aatish/app/sync-bus-work/QUERIES/responses/ for R-*.json. Apply each response. Move Q+R to archive/.",
+      "apply_corrective": "Read /home/aatish/app/sync-bus-work/QUERIES/correctives/P[N]_corrective_[n].json. Apply only scoped fixes within generator-ledger-mobile/. Do not touch do_not_touch files. Do not read genset source. Verify each acceptance criterion. Move consumed corrective to archive/.",
+      "design_proposal": "Read /home/aatish/app/generator-ledger-mobile/DESIGN/designer_agent.json. Begin PH1 design system proposal for [screen]. Use Google Stitch MCP to screenshot web app for visual reference. Generate 3 concepts in Stitch MCP. Present for review before implementing anything.",
+      "screen_proposal": "Read /home/aatish/app/generator-ledger-mobile/DESIGN/designer_agent.json. Begin PH2 screen design proposal for [screen_name]. Generate 2-3 layouts in Google Stitch MCP using approved design system. Include motion plan. Present for review before implementing.",
+      "implement_screen": "Read /home/aatish/app/generator-ledger-mobile/DESIGN/designer_agent.json. Design for [screen_name] approved. Begin PH3 implementation. Use approved Stitch frame as pixel target. Stay within generator-ledger-mobile/ only — lib/ui/, lib/widgets/, lib/theme/, lib/animations/, assets/.",
+      "full_resync": "Read /home/aatish/app/generator-ledger-mobile/DESIGN/designer_agent.json. Run full boot. Check responses, correctives, load work queue, load design context. Report: current screen, design phase, pending queries, last decision.",
+      "p9_start": "Read /home/aatish/app/generator-ledger-mobile/DESIGN/designer_agent.json. Begin P9 Dashboard Redesign. Screenshot the web app dashboard via Google Stitch MCP (do not read genset source). Audit current dashboard_screen.dart. Query Codex via sync bus for dashboard API contracts. Begin PH1 design system proposal for dashboard.",
+      "p9_design_layout": "Read /home/aatish/app/generator-ledger-mobile/DESIGN/designer_agent.json. PH1 approved. Begin PH2 for dashboard. Generate 2-3 full dashboard layout variations in Google Stitch MCP showing all four component groups. Include scroll behavior and motion plan. Present for review.",
+      "p9_implement": "Read /home/aatish/app/generator-ledger-mobile/DESIGN/designer_agent.json. PH2 approved. Begin PH3 dashboard implementation. Build all dashboard widgets. Assemble in dashboard_screen.dart. Wire to existing API layer. Add animations. Verify AC1-AC12.",
+      "p10_start": "Read /home/aatish/app/generator-ledger-mobile/DESIGN/designer_agent.json. Begin P10 Footer Restructure and Page Separation. Screenshot web app Gensets and Vendors pages via Google Stitch MCP. Audit current app_bottom_nav.dart and directory_screen.dart. Query Codex via sync bus for generator and vendor API contracts. Begin PH1.",
+      "p10_design_layout": "Read /home/aatish/app/generator-ledger-mobile/DESIGN/designer_agent.json. PH1 approved. Begin PH2 for footer and pages. Generate 2-3 layout variations in Google Stitch MCP. Include footer mockups with 5 tabs. Present for review.",
+      "p10_implement": "Read /home/aatish/app/generator-ledger-mobile/DESIGN/designer_agent.json. PH2 approved. Begin PH3. Update app_bottom_nav.dart, app_scaffold.dart, router.dart. Build gensets_screen.dart and vendors_list_screen.dart. Verify AC1-AC16.",
+      "p11_start": "Read /home/aatish/app/generator-ledger-mobile/DESIGN/designer_agent.json. Begin P11 New Booking Module Parity. Screenshot web app create-booking and bookings pages via Google Stitch MCP (do not read genset HTML source). Audit current BookingForm and BookingsListScreen. Query Codex via sync bus for generator list API contract, available capacities, and vendor bookings API shape. Begin PH1.",
+      "p11_design_layout": "Read /home/aatish/app/generator-ledger-mobile/DESIGN/designer_agent.json. PH1 approved. Begin PH2 for create booking screen and list enhancements. Layout: Vendor section → Assignment toggle → Capacity/Generator → Dates → Vendor bookings preview → Remarks → Submit. Design filter bar for bookings list. Generate 2-3 layout variations in Google Stitch MCP. Include motion plan. Present for review.",
+      "p11_implement": "Read /home/aatish/app/generator-ledger-mobile/DESIGN/designer_agent.json. PH2 approved. Begin PH3 implementation. Build: VendorAutocomplete, AssignmentMethodToggle, CapacitySelector, GeneratorDropdown, DateChipsPicker, VendorBookingsPreview, BookingSuccessSheet. Assemble in create_booking_screen.dart. Add route /bookings/create. Update FAB in bookings_list_screen.dart. Add status and date range filters to list. Wire through existing BookingProvider. Verify AC1-AC15.",
+      "p12_start": "Read /home/aatish/app/generator-ledger-mobile/DESIGN/designer_agent.json. Begin P12 Enhance Genset Page. Screenshot web gensets page and add genset overlay via Stitch MCP. Audit current gensets_screen.dart vs web. Query Codex for genset create API contracts. Begin PH1 design system proposal.",
+      "p12_design_layout": "Read /home/aatish/app/generator-ledger-mobile/DESIGN/designer_agent.json. PH1 approved. Begin PH2. Propose full GensetsScreen layout with active filters and the full Add Genset overlay behavior. Generate 2-3 layout variations in Google Stitch MCP. Present for review.",
+      "p12_implement": "Read /home/aatish/app/generator-ledger-mobile/DESIGN/designer_agent.json. PH2 approved. Begin PH3 implementation. Build GensetFilterBar, AddGensetOverlay. Enhance GensetCard visibility. Wire form validation and filters to provider. Self-verify all ACs."
+    },
+    "git_agent": {
+      "commit_flutter": "Read /home/aatish/app/generator-ledger-mobile/GITOPS/git_agent.json. Read all unstaged changes in /home/aatish/app/generator-ledger-mobile/. Analyze semantically. Group into logical commit candidates. Present full commit plan for review before staging anything.",
+      "commit_phase": "Read /home/aatish/app/genset/PROMPTS/codex_agent.json. Execute the git agent spawn instruction just emitted. Stage only boundary files. Verify staged == boundary. Commit [P{N}] {Phase Name}: {description}. Report hash.",
+      "approve": "APPROVE",
+      "approve_skip": "APPROVE SKIP [CC-XXX]",
+      "edit": "EDIT [CC-XXX]"
+    },
+    "recovery": {
+      "stale_query": "Read /home/aatish/app/genset/PROMPTS/codex_agent.json. Check /home/aatish/app/sync-bus-work/QUERIES/pending/ for unanswered Q-*.json. Process now.",
+      "check_queries": "ls /home/aatish/app/sync-bus-work/QUERIES/pending/ && ls /home/aatish/app/sync-bus-work/QUERIES/responses/ && ls /home/aatish/app/sync-bus-work/QUERIES/correctives/",
+      "monitor": "watch -n 5 'echo PENDING && ls /home/aatish/app/sync-bus-work/QUERIES/pending/ && echo RESPONSES && ls /home/aatish/app/sync-bus-work/QUERIES/responses/ && echo CORRECTIVES && ls /home/aatish/app/sync-bus-work/QUERIES/correctives/'"
+    }
+  },
+  "known_state": {
+    "last_reviewed": "2026-04-21",
+    "p8_status": "APPROVED",
+    "p9_status": "APPROVED",
+    "p10_status": "APPROVED",
+    "p11_status": "APPROVED",
+    "p12_status": "APPROVED",
+    "p13_status": "CORRECTIVE_2_APPLIED",
+    "codex_open_issues": [
+      "LOW: gemini prompt files in workspace root — add to .gitignore",
+      "PENDING: Codex agent P10→completed and P11→active patches not yet merged (manual merge required)"
+    ],
+    "codex_issues_resolved_this_session": [],
+    "antigravity_open_issues": [],
+    "antigravity_issues_resolved_this_session": [
+      "FIXED: runtime_state transitioned to P11 PH1",
+      "FIXED: P11_screens added to approved_proposals",
+      "FIXED: p11_scope block added",
+      "FIXED: allowed_modifications expanded for bookings"
+    ],
+    "architecture_changes_this_session": [
+      "FIXED v3.2: Removed all SSH references — both agents run native on same server",
+      "FIXED v3.2: Added cross_repo_access section with strict codebase boundaries",
+      "FIXED v3.2: Codex audit/review tells now use git ls-files/diff instead of direct Flutter source reads",
+      "FIXED v3.2: Correctives routed through sync bus correctives/ directory instead of genset PROMPTS/",
+      "FIXED v3.2: Explicit tool assignment — Codex=Graphify, Antigravity=Google Stitch",
+      "FIXED v3.2: Sync bus self-service rule added — each agent pushes/pulls independently",
+      "FIXED v3.2: All 19+ tells updated to respect boundaries"
+    ],
+    "next_action": "Codex: verify P13 Corrective 2. Then git agent: commit."
+  },
+  "phase_definition_template": {
+    "description": "Template Claude fills when producing a new phase definition. Every new phase gets this structure.",
+    "fields": {
+      "id": "P{N}",
+      "name": "Phase name",
+      "status": "NOT_STARTED",
+      "description": "What this phase accomplishes",
+      "owner": "Codex | Antigravity | Both",
+      "pre_phase_actions": [
+        "Any setup before phase work begins"
+      ],
+      "scope": [
+        "What is included in this phase"
+      ],
+      "not_in_scope": [
+        "What is explicitly excluded"
+      ],
+      "regression_guard": "What future phases must never break",
+      "exit_criteria": [
+        "Falsifiable conditions — all must be true before approval"
+      ],
+      "review_checklist_additions": [
+        "Any new C-checks added for this phase"
+      ],
+      "new_business_rules": [
+        "Any new BR rules — if none, omit"
+      ],
+      "tells": {
+        "start": "Exact tell to start this phase",
+        "issue_corrective": "Exact tell to issue a corrective",
+        "apply_corrective": "Exact tell for Antigravity to apply",
+        "re_review": "Exact tell to re-review",
+        "approve": "Exact tell to approve"
+      }
+    }
+  },
+  "architecture_decisions_log": [
+    {
+      "decision": "Sync bus as plain directory",
+      "reason": "Co-located codebases make git commits as message passing pointless. Plain file write/read is faster and simpler."
+    },
+    {
+      "decision": "Both agents run native on same server",
+      "reason": "Both codebases (genset and generator-ledger-mobile) are on aatishserver. Both agents have native filesystem access. No SSH needed.",
+      "supersedes": "Previous decision 'Antigravity is SSH-only' — RETIRED in v3.2"
+    },
+    {
+      "decision": "Strict codebase boundaries with git diff cross-inspection",
+      "reason": "Codex owns genset/, Antigravity owns generator-ledger-mobile/. Direct cross-repo source reads are forbidden to prevent accidental coupling and keep each agent focused. When cross-repo context is needed, git diff/log/ls-files provides structural insight without exposing full source code. This enforces clean separation of concerns.",
+      "added_in": "v3.2"
+    },
+    {
+      "decision": "Correctives route through sync bus, not genset PROMPTS/",
+      "reason": "Under strict boundaries, Antigravity cannot read files in genset/. Correctives are inter-agent instructions, so they belong in the shared sync bus directory at QUERIES/correctives/.",
+      "added_in": "v3.2"
+    },
+    {
+      "decision": "Explicit tool assignment: Codex=Graphify, Antigravity=Google Stitch",
+      "reason": "Each agent has one designated analysis tool. Codex uses Graphify for code graph traversal and web app analysis. Antigravity uses Google Stitch MCP for visual design, screenshots, and UI reference. Never swap.",
+      "added_in": "v3.2"
+    },
+    {
+      "decision": "Sync bus self-service",
+      "reason": "Each agent is responsible for pushing and pulling its own files to/from the sync bus. No human mediation for routine sync bus I/O. Codex reads pending/ and writes responses/+correctives/. Antigravity reads responses/+correctives/ and writes pending/. Both archive consumed files.",
+      "added_in": "v3.2"
+    },
+    {
+      "decision": "Three separate git repos",
+      "reason": "Different deployment, versioning, review cycles. No history contamination."
+    },
+    {
+      "decision": "Graphify three interfaces",
+      "reason": "File for bulk, CLI for NL, MCP stdio for traversal. Each optimal for its query type."
+    },
+    {
+      "decision": "Component audit on Codex side",
+      "reason": "Codex uses Graphify for web-side mapping and git ls-files for Flutter file structure. One-pass audit without reading Flutter source."
+    },
+    {
+      "decision": "P8 added after Antigravity redesign",
+      "reason": "Antigravity redesigned UI post-P7. Codex had never reviewed that output. P8 closes that gap."
+    },
+    {
+      "decision": "Git Action Agent generalized v2",
+      "reason": "Same commit protocol regardless of project. Only configuration block is project-specific."
+    },
+    {
+      "decision": "system_architect_agent governs all agent files",
+      "reason": "Single file fed to Claude reconstructs full context. Claude produces updated agent files only. Never touches application source."
+    },
+    {
+      "decision": "P10 splits DirectoryScreen into standalone pages",
+      "reason": "Web app has separate Gensets and Vendors pages. Splitting gives each domain its own page and matches web app navigation."
+    },
+    {
+      "decision": "P11 replaces BookingForm dialog with full-page CreateBookingScreen",
+      "reason": "Web app has a dedicated /create-booking page. The mobile dialog cannot accommodate the full feature set. A full-page form provides space for all sections."
+    }
+  ],
+  "non_goals": [
+    "Never produce application source code — .dart, .py, or any other language",
+    "Never suggest edits to Flutter or Python files",
+    "Never produce partial files — always complete deployable JSON",
+    "Never ask more than one clarifying question before producing output",
+    "Never ignore known_state open issues when touching a file that has them",
+    "Never let Codex read/write Flutter source files — git diff only for cross-repo",
+    "Never let Antigravity read/write genset source files — git diff only for cross-repo",
+    "Never use SSH in any tell, boot sequence, or protocol — both agents are native",
+    "Never swap tools — Codex=Graphify, Antigravity=Google Stitch",
+    "Never change architectural decisions without explaining what breaks and what replaces it"
+  ]
+}
